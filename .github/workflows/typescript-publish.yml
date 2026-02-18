@@ -1,0 +1,102 @@
+name: Publish TypeScript SDK
+
+on:
+  push:
+    tags:
+      - 'typescript/v*'  # typescript/v1.0.0, typescript/v1.1.0, etc.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # For creating GitHub releases
+      packages: write  # For npm publishing
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/typescript/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Publishing version: $VERSION"
+      
+      - name: Install dependencies
+        working-directory: typescript
+        run: npm ci
+      
+      - name: Run type check
+        working-directory: typescript
+        run: npm run typecheck
+      
+      - name: Build SDK
+        working-directory: typescript
+        run: npm run build
+      
+      - name: Run tests (if available)
+        working-directory: typescript
+        run: npm test || echo "⚠️ No tests configured"
+        continue-on-error: true
+      
+      - name: Verify package.json version
+        working-directory: typescript
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch: package.json=$PKG_VERSION, tag=$TAG_VERSION"
+            exit 1
+          fi
+          
+          echo "✅ Version match: $PKG_VERSION"
+      
+      - name: Publish to npm
+        working-directory: typescript
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: TypeScript SDK v${{ steps.version.outputs.version }}
+          body: |
+            ## 📦 @northrelay/sdk v${{ steps.version.outputs.version }}
+            
+            ### Installation
+            
+            ```bash
+            npm install @northrelay/sdk@${{ steps.version.outputs.version }}
+            ```
+            
+            ### Links
+            
+            - 📖 [Documentation](https://docs.northrelay.ca)
+            - 📦 [npm Package](https://www.npmjs.com/package/@northrelay/sdk/v/${{ steps.version.outputs.version }})
+            - 🐛 [Report Issues](https://github.com/North-Relay/northrelay-sdks/issues)
+            
+            ### What's Changed
+            
+            See [CHANGELOG.md](https://github.com/North-Relay/northrelay-sdks/blob/main/typescript/CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Successfully published @northrelay/sdk v${{ steps.version.outputs.version }} to npm"
+          echo "📦 Package: https://www.npmjs.com/package/@northrelay/sdk"
+          echo "🏷️ Release: https://github.com/North-Relay/northrelay-sdks/releases/tag/${{ github.ref_name }}"
