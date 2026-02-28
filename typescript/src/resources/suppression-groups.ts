@@ -110,7 +110,7 @@ export class SuppressionGroupsResource {
    */
   public async removeSuppression(id: string, email: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/suppression-groups/${id}/suppressions/${email}`),
+      () => this.http.delete(`/api/v1/suppression-groups/${id}/suppressions/${encodeURIComponent(email)}`),
       this.retryConfig
     );
   }

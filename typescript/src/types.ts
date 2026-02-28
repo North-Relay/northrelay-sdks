@@ -147,6 +147,53 @@ export interface WebhookEvent {
   };
 }
 
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  eventType: EventType;
+  statusCode: number;
+  responseBody?: string;
+  duration: number;
+  createdAt: string;
+}
+
+export interface WebhookFailure {
+  id: string;
+  webhookId: string;
+  eventType: EventType;
+  statusCode?: number;
+  errorMessage: string;
+  retryCount: number;
+  lastRetryAt?: string;
+  createdAt: string;
+}
+
+export interface WebhookFailureSettings {
+  maxRetries: number;
+  disableAfterFailures: number;
+  alertEmail?: string;
+}
+
+export interface WebhookHealth {
+  healthy: boolean;
+  successRate: number;
+  totalDeliveries: number;
+  totalFailures: number;
+  lastDeliveryAt?: string;
+  lastFailureAt?: string;
+}
+
+// Template versioning
+export interface TemplateVersion {
+  version: number;
+  name?: string;
+  subject: string;
+  htmlContent?: string;
+  textContent?: string;
+  variables?: string[];
+  createdAt: string;
+}
+
 export interface ApiKey {
   id: string;
   name: string;

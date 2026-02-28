@@ -36,13 +36,20 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): boolean {
+  if (!payload || !signature || !secret) return false;
+
   const hmac = crypto.createHmac('sha256', secret);
   hmac.update(payload);
   const expectedSignature = hmac.digest('hex');
-  
+
+  // HMAC-SHA256 hex is always 64 characters. Reject obviously wrong signatures
+  // before the constant-time comparison. This check does not leak timing
+  // information about the expected value since 64 is a fixed, public constant.
+  if (signature.length !== 64) return false;
+
   return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
+    Buffer.from(signature, 'utf8'),
+    Buffer.from(expectedSignature, 'utf8')
   );
 }
 

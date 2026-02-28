@@ -52,7 +52,7 @@ export class SubusersResource {
    */
   public async getByUsername(username: string): Promise<{ success: true; data: Subuser }> {
     return withRetry(
-      () => this.http.get(`/api/v1/subusers/by-username/${username}`),
+      () => this.http.get(`/api/v1/subusers/by-username/${encodeURIComponent(username)}`),
       this.retryConfig
     );
   }
@@ -62,7 +62,7 @@ export class SubusersResource {
    */
   public async checkUsername(username: string): Promise<{ success: true; data: { available: boolean } }> {
     return withRetry(
-      () => this.http.get(`/api/v1/subusers/check-username?username=${username}`),
+      () => this.http.get(`/api/v1/subusers/check-username?${new URLSearchParams({ username })}`),
       this.retryConfig
     );
   }

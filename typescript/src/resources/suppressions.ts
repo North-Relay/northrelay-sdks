@@ -47,7 +47,7 @@ export class SuppressionsResource {
    */
   public async remove(email: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/suppressions/${email}`),
+      () => this.http.delete(`/api/v1/suppressions/${encodeURIComponent(email)}`),
       this.retryConfig
     );
   }

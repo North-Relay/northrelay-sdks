@@ -73,7 +73,7 @@ export class ContactsResource {
    */
   public async bulkDelete(ids: string[]): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.post('/api/v1/contacts', { ids }),
+      () => this.http.delete('/api/v1/contacts/bulk', { data: { ids } }),
       this.retryConfig
     );
   }
@@ -119,7 +119,7 @@ export class ContactsResource {
    */
   public async removeTag(id: string, tag: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/contacts/${id}/tags/${tag}`),
+      () => this.http.delete(`/api/v1/contacts/${id}/tags/${encodeURIComponent(tag)}`),
       this.retryConfig
     );
   }
@@ -168,7 +168,7 @@ export class ContactsResource {
    */
   public async updateList(id: string, request: UpdateContactListRequest): Promise<{ success: true; data: ContactList }> {
     return withRetry(
-      () => this.http.post(`/api/v1/contacts/lists/${id}`, request),
+      () => this.http.patch(`/api/v1/contacts/lists/${id}`, request),
       this.retryConfig
     );
   }
