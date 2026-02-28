@@ -174,7 +174,7 @@ export class TemplatesResource {
    */
   public async restoreVersion(id: string, version: number): Promise<{ success: true; data: { id: string; restoredFromVersion: number; currentVersion: number; message: string } }> {
     return withRetry(
-      () => this.http.post(`/api/v1/templates/${id}/versions/${version}`),
+      () => this.http.post(`/api/v1/templates/${id}/versions/${version}/restore`),
       this.retryConfig
     );
   }
