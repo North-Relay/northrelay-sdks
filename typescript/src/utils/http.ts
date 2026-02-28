@@ -14,6 +14,7 @@ import {
   NetworkError,
 } from '../errors';
 import type { ErrorResponse, RateLimitInfo } from '../types';
+import { SDK_VERSION } from '../version';
 
 export interface HttpClientConfig {
   baseURL: string;
@@ -32,7 +33,7 @@ export class HttpClient {
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': `NorthRelay-SDK/1.0.0`,
+        'User-Agent': `NorthRelay-SDK/${SDK_VERSION}`,
       },
     });
 

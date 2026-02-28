@@ -23,8 +23,8 @@ export class EventsResource {
     endDate?: string;
   }): Promise<PaginatedResponse<EmailEvent>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
     if (options?.eventType) params.set('eventType', options.eventType);
     if (options?.messageId) params.set('messageId', options.messageId);
     if (options?.recipient) params.set('recipient', options.recipient);
@@ -47,6 +47,23 @@ export class EventsResource {
   public async getByMessageId(messageId: string): Promise<{ success: true; data: EmailEvent[] }> {
     return withRetry(
       () => this.http.get(`/api/v1/events?messageId=${messageId}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Count events grouped by type
+   */
+  public async count(options?: {
+    from?: string;
+    to?: string;
+  }): Promise<{ success: true; data: { total: number; byType: Record<string, number> } }> {
+    const params = new URLSearchParams();
+    if (options?.from) params.set('from', options.from);
+    if (options?.to) params.set('to', options.to);
+
+    return withRetry(
+      () => this.http.get(`/api/v1/events/count?${params.toString()}`),
       this.retryConfig
     );
   }

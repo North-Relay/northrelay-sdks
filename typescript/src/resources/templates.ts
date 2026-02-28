@@ -3,7 +3,7 @@
  */
 
 import type { HttpClient } from '../utils/http';
-import type { Template, CreateTemplateRequest, UpdateTemplateRequest, PaginatedResponse } from '../types';
+import type { Template, CreateTemplateRequest, UpdateTemplateRequest, TemplateVersion, PaginatedResponse } from '../types';
 import type { RetryConfig } from '../utils/retry';
 import { withRetry } from '../utils/retry';
 
@@ -26,8 +26,8 @@ export class TemplatesResource {
     activeOnly?: boolean;
   }): Promise<PaginatedResponse<Template>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
     if (options?.search) params.set('search', options.search);
     if (options?.activeOnly) params.set('activeOnly', 'true');
 
@@ -138,6 +138,82 @@ export class TemplatesResource {
   public async extractVariables(content: string): Promise<{ success: true; data: { variables: string[] } }> {
     return withRetry(
       () => this.http.post('/api/v1/templates/extract-variables', { content }),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * List version history for a template
+   */
+  public async listVersions(id: string, options?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{ success: true; data: { versions: TemplateVersion[] }; meta: { page: number; limit: number; total_count: number; has_more: boolean } }> {
+    const params = new URLSearchParams();
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
+
+    return withRetry(
+      () => this.http.get(`/api/v1/templates/${id}/versions?${params.toString()}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Get a specific version snapshot of a template
+   */
+  public async getVersion(id: string, version: number): Promise<{ success: true; data: TemplateVersion }> {
+    return withRetry(
+      () => this.http.get(`/api/v1/templates/${id}/versions/${version}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Restore a template to a specific version
+   */
+  public async restoreVersion(id: string, version: number): Promise<{ success: true; data: { id: string; restoredFromVersion: number; currentVersion: number; message: string } }> {
+    return withRetry(
+      () => this.http.post(`/api/v1/templates/${id}/versions/${version}/restore`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Compile MJML to HTML
+   */
+  public async compileMjml(mjml: string, options?: { minify?: boolean }): Promise<{ success: true; data: { html: string } }> {
+    return withRetry(
+      () => this.http.post('/api/v1/templates/compile-mjml', { mjml, ...options }),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Render a template with variables
+   */
+  public async render(request: {
+    templateId?: string;
+    subject?: string;
+    html?: string;
+    text?: string;
+    variables?: Record<string, string>;
+  }): Promise<{ success: true; data: { subject: string; html: string; text: string } }> {
+    return withRetry(
+      () => this.http.post('/api/v1/templates/render', request),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Generate templates from starter layouts with a brand theme
+   */
+  public async generateBulk(options?: {
+    themeId?: string;
+    layoutIds?: string[];
+  }): Promise<{ success: true; data: { created: number; skipped: number; templates: Array<{ id: string; name: string }>; errors: string[] } }> {
+    return withRetry(
+      () => this.http.post('/api/v1/templates/generate-bulk', options || {}),
       this.retryConfig
     );
   }

@@ -36,6 +36,7 @@ export type {
   Template,
   CreateTemplateRequest,
   UpdateTemplateRequest,
+  TemplateVersion,
   MjmlCompileResult,
   ExtractedVariables,
   BulkTemplateResult,
@@ -49,6 +50,10 @@ export type {
   CreateWebhookRequest,
   UpdateWebhookRequest,
   WebhookEvent,
+  WebhookDelivery,
+  WebhookFailure,
+  WebhookFailureSettings,
+  WebhookHealth,
   
   // API Key types
   ApiKey,
