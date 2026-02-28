@@ -57,7 +57,7 @@ export class EventsResource {
   public async count(options?: {
     from?: string;
     to?: string;
-  }): Promise<{ success: true; data: { total: number; byType: Record<string, number> } }> {
+  }): Promise<{ total: number; byType: Record<string, number> }> {
     const params = new URLSearchParams();
     if (options?.from) params.set('from', options.from);
     if (options?.to) params.set('to', options.to);
