@@ -150,8 +150,8 @@ export class TemplatesResource {
     limit?: number;
   }): Promise<{ success: true; data: { versions: TemplateVersion[] }; meta: { page: number; limit: number; total_count: number; has_more: boolean } }> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
 
     return withRetry(
       () => this.http.get(`/api/v1/templates/${id}/versions?${params.toString()}`),
