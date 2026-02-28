@@ -80,8 +80,8 @@ export class WebhooksResource {
     limit?: number;
   }): Promise<PaginatedResponse<WebhookDelivery>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
 
     return withRetry(
       () => this.http.get(`/api/v1/webhooks/${id}/deliveries?${params.toString()}`),
@@ -97,8 +97,8 @@ export class WebhooksResource {
     limit?: number;
   }): Promise<PaginatedResponse<WebhookFailure>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
 
     return withRetry(
       () => this.http.get(`/api/v1/webhooks/${id}/failures?${params.toString()}`),

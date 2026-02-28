@@ -23,8 +23,8 @@ export class EventsResource {
     endDate?: string;
   }): Promise<PaginatedResponse<EmailEvent>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
     if (options?.eventType) params.set('eventType', options.eventType);
     if (options?.messageId) params.set('messageId', options.messageId);
     if (options?.recipient) params.set('recipient', options.recipient);
