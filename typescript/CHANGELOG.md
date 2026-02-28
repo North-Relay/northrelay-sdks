@@ -77,4 +77,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unused Zod dependency (3KB overhead, can be removed)
 
 [1.2.0]: https://github.com/North-Relay/northrelay-sdks/releases/tag/typescript/v1.2.0
-[1.0.0]: https://github.com/North-Relay/northrelay-sdks/releases/tag/typescript/v1.0.0
+[1.0.0]: https://github.com/North-Relay/northrelay-platform/releases/tag/sdk/v1.0.0
