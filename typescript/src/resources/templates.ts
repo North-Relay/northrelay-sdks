@@ -26,8 +26,8 @@ export class TemplatesResource {
     activeOnly?: boolean;
   }): Promise<PaginatedResponse<Template>> {
     const params = new URLSearchParams();
-    if (options?.page) params.set('page', options.page.toString());
-    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.page !== undefined) params.set('page', options.page.toString());
+    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
     if (options?.search) params.set('search', options.search);
     if (options?.activeOnly) params.set('activeOnly', 'true');
 
