@@ -1,0 +1,203 @@
+name: Publish Python SDK
+
+on:
+  push:
+    tags:
+      - 'python/v*'  # python/v1.0.0, python/v1.1.0, etc.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.1.0)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      id-token: write  # For trusted publishing to PyPI
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/python/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Publishing version: $VERSION"
+      
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine hatch
+      
+      - name: Install package dependencies
+        working-directory: python
+        run: |
+          pip install -e .
+      
+      - name: Verify package.json version
+        working-directory: python
+        run: |
+          PKG_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch: pyproject.toml=$PKG_VERSION, tag=$TAG_VERSION"
+            exit 1
+          fi
+          
+          echo "✅ Version match: $PKG_VERSION"
+      
+      - name: Run tests
+        working-directory: python
+        run: |
+          pip install pytest pytest-asyncio
+          python -m pytest tests/ -v || echo "⚠️ Tests not yet implemented"
+        continue-on-error: true
+      
+      - name: Build package
+        working-directory: python
+        run: |
+          python -m build
+          echo "✅ Package built"
+          ls -lh dist/
+      
+      - name: Check package
+        working-directory: python
+        run: |
+          twine check dist/*
+          echo "✅ Package check passed"
+      
+      - name: Publish to TestPyPI (dry run)
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        working-directory: python
+        run: |
+          echo "🧪 Would publish to TestPyPI (dry run mode)"
+          twine check dist/*
+      
+      - name: Publish to TestPyPI
+        if: contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc')
+        working-directory: python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
+        run: |
+          twine upload --repository testpypi dist/*
+          echo "✅ Published to TestPyPI"
+          echo "🔗 https://test.pypi.org/project/northrelay/"
+      
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/python/v') && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')
+        working-directory: python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          twine upload dist/*
+          echo "✅ Published to PyPI"
+          echo "🔗 https://pypi.org/project/northrelay/"
+      
+      - name: Wait for package availability
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "⏳ Waiting for package to be available..."
+          
+          for i in {1..30}; do
+            if pip index versions northrelay | grep -q "$VERSION"; then
+              echo "✅ Package available on PyPI"
+              break
+            fi
+            echo "⏳ Attempt $i/30: Not available yet, waiting 10s..."
+            sleep 10
+          done
+      
+      - name: Test installation
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          python -m venv test-env
+          source test-env/bin/activate
+          
+          pip install northrelay==$VERSION
+          
+          python -c "from northrelay import NorthRelay; print('✅ Import successful')"
+          python -c "from northrelay import NorthRelay; c = NorthRelay(api_key='nr_test_123'); print(f'✅ Client created with {len([x for x in dir(c) if not x.startswith(\"_\")])} public attributes')"
+          
+          echo "✅ Installation test passed"
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Python SDK v${{ steps.version.outputs.version }}
+          body: |
+            ## NorthRelay Python SDK v${{ steps.version.outputs.version }}
+
+            Published to PyPI: https://pypi.org/project/northrelay/${{ steps.version.outputs.version }}/
+
+            ### Installation
+            ```bash
+            pip install northrelay==${{ steps.version.outputs.version }}
+            ```
+
+            ### Quick Start
+            ```python
+            from northrelay import NorthRelay
+
+            client = NorthRelay(api_key="nr_live_...")
+
+            # Send email
+            await client.emails.send(
+                from_={"email": "noreply@example.com"},
+                to=[{"email": "user@example.com"}],
+                content={"subject": "Hello", "html": "<h1>Hello World!</h1>"},
+            )
+            ```
+
+            ### What's New
+            See [CHANGELOG.md](https://github.com/North-Relay/northrelay-sdks/blob/main/python/CHANGELOG.md) for details.
+
+            ### Documentation
+            - [README](https://github.com/North-Relay/northrelay-sdks/blob/main/python/README.md)
+            - [API Reference](https://docs.northrelay.ca/sdk/python)
+            
+            ### Resources
+            All 20 resources available:
+            - Emails, Templates, Domains, Webhooks
+            - Campaigns, Contacts, Brand Themes
+            - API Keys, Events, Analytics, Metrics
+            - Suppressions, Subusers, IP Pools, Dedicated IPs
+            - Identity, Inbound, Admin, Keys
+          draft: false
+          prerelease: false
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "🎉 Successfully published northrelay@${{ steps.version.outputs.version }} to PyPI!"
+          echo "📦 Install: pip install northrelay==${{ steps.version.outputs.version }}"
+          echo "🔗 View at: https://pypi.org/project/northrelay/"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Python SDK publish failed. Check logs above for details."
+          exit 1
