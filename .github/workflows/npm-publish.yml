@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         working-directory: typescript
-        run: npm test || echo "Warning: Tests failed or not configured"
+        run: npm test
         continue-on-error: true
 
       - name: Verify package.json version
@@ -67,4 +67,4 @@ jobs:
       - name: Summary
         run: |
           echo "Published @northrelay/sdk@${{ steps.version.outputs.version }} to npm"
-          echo "Package: https://www.npmjs.com/package/@northrelay/sdk"
+          echo "https://www.npmjs.com/package/@northrelay/sdk"
