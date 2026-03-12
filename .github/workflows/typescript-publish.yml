@@ -3,7 +3,12 @@ name: Publish TypeScript SDK
 on:
   push:
     tags:
-      - 'typescript/v*'  # typescript/v1.0.0, typescript/v1.1.0, etc.
+      - 'typescript/v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.4.0)'
+        required: true
 
 jobs:
   publish:
@@ -16,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('typescript/v{0}', inputs.version) || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,7 +33,11 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/typescript/v}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/typescript/v}
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing version: $VERSION"
 
@@ -63,9 +74,6 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # GitHub Release is created by the sync workflow in the monorepo.
-      # Do not create a duplicate release here.
 
       - name: Summary
         run: |
