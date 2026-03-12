@@ -63,8 +63,8 @@ export class EmailsResource {
     templateId: string,
     to: Array<{ email: string; name?: string }>,
     variables: Record<string, string>,
-    options: {
-      from: { email: string; name?: string };
+    options?: {
+      from?: { email: string; name?: string };
       cc?: Array<{ email: string; name?: string }>;
       bcc?: Array<{ email: string; name?: string }>;
       replyTo?: { email: string; name?: string };
@@ -72,17 +72,17 @@ export class EmailsResource {
     }
   ): Promise<SendEmailResponse> {
     const request: SendEmailRequest = {
-      from: options.from,
+      from: options?.from || { email: 'noreply@example.com' },
       to,
-      cc: options.cc,
-      bcc: options.bcc,
-      replyTo: options.replyTo,
+      cc: options?.cc,
+      bcc: options?.bcc,
+      replyTo: options?.replyTo,
       content: {
         subject: '', // Will be filled from template
         templateId,
       },
       variables,
-      themeId: options.themeId,
+      themeId: options?.themeId,
     };
 
     return this.send(request);
@@ -226,7 +226,12 @@ export class EmailsResource {
    */
   public async getEvents(messageId: string): Promise<{ success: true; data: EmailEvent[] }> {
     return withRetry(
-      () => this.http.get(`/api/v1/emails/${messageId}/events`),
+      async () => {
+        const response = await this.http.get<{ success: true; data: { events?: EmailEvent[] } }>(
+          `/api/v1/emails/${encodeURIComponent(messageId)}?include_events=true`
+        );
+        return { success: true as const, data: response.data.events || [] };
+      },
       this.retryConfig
     );
   }

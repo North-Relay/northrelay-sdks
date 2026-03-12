@@ -9,6 +9,7 @@ export { NorthRelayClient } from './client';
 export {
   NorthRelayError,
   AuthenticationError,
+  ScopeError,
   ValidationError,
   QuotaExceededError,
   RateLimitError,
@@ -22,6 +23,7 @@ export type {
   PoolType,
   PlanTier,
   EmailStatus,
+  EmailSource,
   EventType,
   CampaignStatus,
   
@@ -36,7 +38,6 @@ export type {
   Template,
   CreateTemplateRequest,
   UpdateTemplateRequest,
-  TemplateVersion,
   MjmlCompileResult,
   ExtractedVariables,
   BulkTemplateResult,
@@ -52,8 +53,8 @@ export type {
   WebhookEvent,
   WebhookDelivery,
   WebhookFailure,
-  WebhookFailureSettings,
   WebhookHealth,
+  WebhookFailureSettings,
   
   // API Key types
   ApiKey,
@@ -115,6 +116,8 @@ export type {
   CreateIdentityRequest,
   UpdateIdentityRequest,
   RecipientPreferences,
+  UserProfile,
+  SubscriptionUpdate,
   
   // IP Pool types
   IpPool,
@@ -124,7 +127,7 @@ export type {
   CreateDedicatedIpRequest,
   WarmupStatus,
   
-  // Inbound types
+  // Inbound types (legacy — inbox resource uses local types)
   InboundDomain,
   CreateInboundDomainRequest,
   UpdateInboundDomainRequest,

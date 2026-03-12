@@ -29,7 +29,7 @@ export class ApiKeysResource {
 
   public async revoke(id: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/api-keys/${id}`),
+      () => this.http.post(`/api/v1/api-keys/${id}/revoke`),
       this.retryConfig
     );
   }

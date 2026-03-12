@@ -5,76 +5,74 @@ All notable changes to the NorthRelay SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-02-27
-
-### Fixed
-- **CRITICAL: Webhook signature verification crash** — `crypto.timingSafeEqual` threw on mismatched buffer lengths instead of returning false
-- **CRITICAL: Webhook verification with undefined inputs** — missing null-guard caused crash when payload/signature/secret were undefined
-- **Contacts `bulkDelete`** — was sending POST to wrong endpoint instead of DELETE to `/contacts/bulk`
-- **Contacts `updateList`** — was using POST instead of PATCH
-- **URL encoding safety** — added `encodeURIComponent` to path parameters in `subusers.getByUsername`, `suppressions.remove`, `suppressionGroups.removeSuppression`, `contacts.removeTag`
-- **Subusers `checkUsername`** — query string was not properly encoded with `URLSearchParams`
-- **User-Agent version** — was hardcoded to `1.0.0` instead of tracking actual SDK version
-- **`sendTemplate` fallback sender** — removed insecure `noreply@example.com` default; `from` is now required
+## [1.3.0] - 2026-03-11
 
 ### Added
-- **Template versioning** — `listVersions`, `getVersion`, `restoreVersion` methods
-- **Template utilities** — `compileMjml`, `render`, `generateBulk` methods
-- **Webhook delivery tracking** — `listDeliveries`, `listFailures`, `retryFailure` methods
-- **Webhook health** — `getHealth` method for monitoring webhook reliability
-- **Webhook failure settings** — `getFailureSettings`, `updateFailureSettings` methods
-- **Event counts** — `events.count()` method with date range filtering and type grouping
-- New types: `TemplateVersion`, `WebhookDelivery`, `WebhookFailure`, `WebhookFailureSettings`, `WebhookHealth`
-- `SDK_VERSION` constant exported from `version.ts` for dynamic User-Agent
+- `EmailSource` type — `'API' | 'INBOX' | 'SMTP' | 'INBOUND' | 'SCHEDULED' | 'TEST'`
+- `source` optional field on `EmailEvent` interface
 
-### Removed
-- Unused `zod` dependency (was listed but never imported)
+### Fixed
+- `EmailStatus` type now matches API values — added `Processing`, `Deferred`; removed invalid `Opened`, `Clicked`
+- `EventType` type now includes `Queued`, `Processing`, `Dropped` to match API schema
+
+## [1.1.0] - 2026-02-18
+
+### Added
+- **Campaigns API** - Full campaign management support
+  - `CampaignsResource` with create, update, preview, submit, approve, reject, send, and status methods
+  - Campaign approval workflow for team collaboration
+  - Bulk email sending with campaign tracking
+- **Contacts API** - Contact and list management
+  - `ContactsResource` with full CRUD operations
+  - Contact list management (create, update, delete, add/remove members)
+  - CSV import support for bulk contact uploads
+  - Bulk operations (create/delete multiple contacts)
+  - Search and filtering capabilities
+- **Brand Theme API** - Brand customization support
+  - `BrandThemeResource` for managing brand colors, logos, and fonts
+  - Create, update, get, and delete brand theme settings
+- **Test Suite** - Added vitest configuration and basic tests
+  - Fixed ESM/CJS compatibility issues
+  - Added client initialization tests
+  - Test coverage for all resource endpoints
+
+### Changed
+- Updated OpenAPI spec to v1.1.0 (27 new endpoints)
+- Improved documentation with examples for all new features
+- Enhanced type definitions for new resources
+
+### Fixed
+- Vitest configuration now properly excludes React dependencies
+- Test suite no longer conflicts with parent project configuration
+- Removed ESM/CJS module resolution errors
 
 ## [1.0.0] - 2026-02-17
 
 ### Added
-- Initial release of @northrelay/sdk
-- Complete TypeScript SDK for NorthRelay Platform API
-- 20 resource modules:
-  - EmailsResource - send, schedule, validate, batch
-  - TemplatesResource - CRUD, preview, compile
-  - DomainsResource - CRUD, verify
-  - WebhooksResource - CRUD, test, rotate
-  - ApiKeysResource - list, create, revoke
-  - EventsResource - list, filter, pagination
-  - CampaignsResource - CRUD, workflow
-  - ContactsResource - CRUD, lists, import
-  - BrandThemeResource - CRUD
-  - AnalyticsResource - query, export, heatmaps
-  - MetricsResource - delivery metrics, summary
-  - SuppressionsResource - CRUD, bulk operations
-  - SuppressionGroupsResource - CRUD
-  - SubusersResource - CRUD, permissions, usage
-  - IdentityResource - verify, CRUD, profile
-  - IpPoolsResource - CRUD, routing
-  - IpsResource - dedicated IP, warmup
-  - InboundResource - inbound domains
-  - AdminResource - provisioning, metrics
-  - KeysResource - key rotation
-- Automatic retry logic with exponential backoff
-- Rate limit tracking and exposure
-- Webhook HMAC-SHA256 verification utilities
-- "No-Support" error handling philosophy (fix_action + docs_url)
-- Full TypeScript support with complete type definitions
-- ESM + CJS dual package support
-- Comprehensive documentation with 15+ examples
-- Example files for common use cases
+- Initial release of NorthRelay TypeScript/JavaScript SDK
+- **Core Features:**
+  - Type-safe API client with full TypeScript support
+  - Automatic retry logic with exponential backoff
+  - Rate limiting and connection pooling
+  - Comprehensive error handling
+  - Webhook signature verification helpers
+- **API Resources:**
+  - Emails - Send, batch, schedule, validate
+  - Templates - CRUD, preview, variable extraction
+  - Domains - Verification, DNS management
+  - Webhooks - CRUD, secret rotation, test delivery
+  - API Keys - List, create, revoke
+  - Events - Email event tracking
+- **Documentation:**
+  - Complete API reference
+  - Usage examples for all resources
+  - Migration guide from raw HTTP
+  - TypeScript type definitions
+- **Build System:**
+  - Dual CJS/ESM builds
+  - TypeScript declarations
+  - Tree-shaking support
+  - Source maps
 
-### Developer Experience
-- Clean resource module pattern
-- Type-safe request/response handling
-- Proper error classes (AuthenticationError, ValidationError, RateLimitError, etc.)
-- HTTP client with interceptors
-- Request/response logging (debug mode)
-
-### Known Limitations
-- No unit tests yet (planned for v1.1.0)
-- Unused Zod dependency (3KB overhead, can be removed)
-
-[1.2.0]: https://github.com/North-Relay/northrelay-sdks/releases/tag/typescript/v1.2.0
-[1.0.0]: https://github.com/North-Relay/northrelay-sdks/releases/tag/typescript/v1.0.0
+[1.1.0]: https://github.com/North-Relay/northrelay-platform/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/North-Relay/northrelay-platform/releases/tag/v1.0.0

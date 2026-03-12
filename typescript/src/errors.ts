@@ -66,6 +66,16 @@ export class RateLimitError extends NorthRelayError {
   }
 }
 
+export class ScopeError extends NorthRelayError {
+  public readonly requiredScopes?: string[];
+
+  constructor(message: string, requiredScopes?: string[]) {
+    super(message, 'SCOPE_INSUFFICIENT', 403, 'Create a new API key with the required scopes or use a full_access key', 'https://docs.northrelay.ca/api/scopes');
+    this.name = 'ScopeError';
+    this.requiredScopes = requiredScopes;
+  }
+}
+
 export class NotFoundError extends NorthRelayError {
   constructor(resource: string) {
     super(`${resource} not found`, 'NOT_FOUND', 404);

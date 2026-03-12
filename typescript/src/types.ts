@@ -4,8 +4,9 @@
 
 export type PoolType = 'Shared' | 'Isolated';
 export type PlanTier = 'Sandbox' | 'Micro' | 'Startup' | 'Scale' | 'Enterprise';
-export type EmailStatus = 'Queued' | 'Sent' | 'Delivered' | 'Bounced' | 'Failed' | 'Opened' | 'Clicked';
-export type EventType = 'Sent' | 'Delivered' | 'Bounced' | 'Opened' | 'Clicked' | 'Complained' | 'Unsubscribed' | 'Dropped';
+export type EmailStatus = 'Queued' | 'Processing' | 'Sent' | 'Delivered' | 'Bounced' | 'Failed' | 'Deferred';
+export type EventType = 'Queued' | 'Processing' | 'Sent' | 'Delivered' | 'Bounced' | 'Opened' | 'Clicked' | 'Complained' | 'Unsubscribed' | 'Dropped';
+export type EmailSource = 'API' | 'INBOX' | 'SMTP' | 'INBOUND' | 'SCHEDULED' | 'TEST';
 
 export interface EmailAddress {
   email: string;
@@ -70,6 +71,9 @@ export interface Template {
   extractedVariables?: string[];
   themeId?: string;
   isActive: boolean;
+  format?: 'LEGACY' | 'BLOCKS';
+  version?: number;
+  blockContent?: TemplateDocument;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,9 +81,13 @@ export interface Template {
 export interface CreateTemplateRequest {
   name: string;
   subject: string;
-  htmlContent: string;
+  htmlContent?: string;
   textContent?: string;
+  mjml?: string;
   themeId?: string;
+  blocks?: TemplateDocument;
+  category?: string;
+  variables?: string[];
 }
 
 export interface UpdateTemplateRequest {
@@ -87,8 +95,91 @@ export interface UpdateTemplateRequest {
   subject?: string;
   htmlContent?: string;
   textContent?: string;
+  mjml?: string;
   themeId?: string;
   isActive?: boolean;
+}
+
+// Block editor types
+export type BlockType =
+  | 'header' | 'text' | 'image' | 'button' | 'divider'
+  | 'columns' | 'social' | 'video' | 'code' | 'table'
+  | 'spacer' | 'navbar' | 'footer';
+
+export interface Block {
+  id: string;
+  type: BlockType;
+  data: Record<string, unknown>;
+  styles?: {
+    padding?: string;
+    backgroundColor?: string;
+    textAlign?: 'left' | 'center' | 'right';
+    borderRadius?: string;
+  };
+}
+
+export interface TemplateDocument {
+  id: string;
+  name: string;
+  version: number;
+  blocks: Block[];
+}
+
+export interface TemplateVersion {
+  id: string;
+  version: number;
+  name: string;
+  subject: string;
+  htmlContent?: string;
+  textContent?: string;
+  variables: string[];
+  blockContent?: TemplateDocument;
+  createdAt: string;
+}
+
+export interface ExportedTemplate {
+  name: string;
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+  variables: unknown;
+  category: string;
+  version: number;
+  blockContent?: TemplateDocument;
+  format: 'LEGACY' | 'BLOCKS';
+}
+
+export interface AddBlockRequest {
+  type: BlockType;
+  data?: Record<string, unknown>;
+  styles?: Block['styles'];
+  position?: number;
+}
+
+export interface UpdateBlockRequest {
+  data?: Record<string, unknown>;
+  styles?: Block['styles'];
+}
+
+export interface TestSendRequest {
+  recipientEmail: string;
+  variables?: Record<string, string>;
+  themeId?: string;
+}
+
+export interface ImportTemplateRequest {
+  name: string;
+  subject: string;
+  htmlContent?: string;
+  textContent?: string;
+  category?: string;
+  blockContent?: unknown;
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
 }
 
 export interface Domain {
@@ -150,48 +241,41 @@ export interface WebhookEvent {
 export interface WebhookDelivery {
   id: string;
   webhookId: string;
-  eventType: EventType;
+  eventId: string;
+  deliveredAt: string;
   statusCode: number;
-  responseBody?: string;
-  duration: number;
-  createdAt: string;
+  success: boolean;
+  retries: number;
+  responseTime?: number;
+  errorMessage?: string;
 }
 
 export interface WebhookFailure {
   id: string;
   webhookId: string;
-  eventType: EventType;
-  statusCode?: number;
+  eventId: string;
+  deliveredAt: string;
+  statusCode: number;
   errorMessage: string;
-  retryCount: number;
+  retries: number;
   lastRetryAt?: string;
-  createdAt: string;
+}
+
+export interface WebhookHealth {
+  webhookId: string;
+  successRate: number;
+  averageResponseTime: number;
+  totalDeliveries: number;
+  failedDeliveries: number;
+  lastDeliveryAt?: string;
+  status: 'healthy' | 'degraded' | 'failing';
 }
 
 export interface WebhookFailureSettings {
   maxRetries: number;
+  retryIntervalSeconds: number;
   disableAfterFailures: number;
-  alertEmail?: string;
-}
-
-export interface WebhookHealth {
-  healthy: boolean;
-  successRate: number;
-  totalDeliveries: number;
-  totalFailures: number;
-  lastDeliveryAt?: string;
-  lastFailureAt?: string;
-}
-
-// Template versioning
-export interface TemplateVersion {
-  version: number;
-  name?: string;
-  subject: string;
-  htmlContent?: string;
-  textContent?: string;
-  variables?: string[];
-  createdAt: string;
+  notifyOnFailure: boolean;
 }
 
 export interface ApiKey {
@@ -227,6 +311,7 @@ export interface EmailEvent {
   statusCode?: string;
   statusMessage?: string;
   poolType: PoolType;
+  source?: EmailSource;
   timestamp: string;
   details?: Record<string, unknown>;
 }
@@ -256,34 +341,63 @@ export interface ClientConfig {
   retryDelay?: number;
 }
 // Campaign Types
-export type CampaignStatus = 'draft' | 'pending_approval' | 'approved' | 'scheduled' | 'sending' | 'sent' | 'failed';
+export type CampaignStatus = 'DRAFT' | 'SCHEDULED' | 'SENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+export type CampaignApprovalStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
 
 export interface Campaign {
   id: string;
   name: string;
-  templateId: string;
-  contactListId: string;
+  subject: string;
+  preheaderText?: string | null;
+  fromName: string;
+  fromEmail: string;
+  replyTo?: string | null;
+  templateId?: string | null;
+  htmlContent?: string | null;
+  textContent?: string | null;
+  templateVariables?: Record<string, string> | null;
+  themeId?: string | null;
   status: CampaignStatus;
-  scheduledFor?: string;
-  sentAt?: string;
+  approvalStatus: CampaignApprovalStatus;
+  trackOpens: boolean;
+  trackClicks: boolean;
+  scheduledFor?: string | null;
+  sentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateCampaignRequest {
   name: string;
-  templateId: string;
-  contactListId: string;
-  scheduledFor?: string;
-  status?: CampaignStatus;
+  subject: string;
+  fromName: string;
+  fromEmail: string;
+  preheaderText?: string;
+  replyTo?: string;
+  templateId?: string;
+  htmlContent?: string;
+  textContent?: string;
+  templateVariables?: Record<string, string>;
+  themeId?: string;
+  listIds?: string[];
+  trackOpens?: boolean;
+  trackClicks?: boolean;
 }
 
 export interface UpdateCampaignRequest {
   name?: string;
+  subject?: string;
+  preheaderText?: string;
+  fromName?: string;
+  fromEmail?: string;
+  replyTo?: string;
   templateId?: string;
-  contactListId?: string;
-  scheduledFor?: string;
-  status?: CampaignStatus;
+  htmlContent?: string;
+  textContent?: string;
+  templateVariables?: Record<string, string>;
+  themeId?: string;
+  trackOpens?: boolean;
+  trackClicks?: boolean;
 }
 
 export interface CampaignSendStatus {
@@ -358,6 +472,12 @@ export interface BrandTheme {
   favicon_url?: string;
   font_family?: string;
   font_url?: string;
+  defaultFromName?: string;
+  defaultFromEmail?: string;
+  trackingDomain?: string;
+  trackingDomainVerified?: boolean;
+  unsubscribePageTitle?: string;
+  unsubscribePageMessage?: string;
 }
 
 export type CreateBrandThemeRequest = BrandTheme;
@@ -534,6 +654,37 @@ export interface RecipientPreferences {
   email: string;
   unsubscribed: boolean;
   suppressionGroups: string[];
+}
+
+export interface UserProfile {
+  userId: string;
+  email: string;
+  name: string | null;
+  planTier: PlanTier;
+  poolAssignment: {
+    type: PoolType;
+    tier: PlanTier;
+    poolId: string | null;
+  };
+  quota: {
+    limit: number;
+    used: number;
+    resetAt: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionUpdate {
+  userId: string;
+  previousTier: PlanTier;
+  newTier: PlanTier;
+  poolAssignment: {
+    type: PoolType;
+    tier: string;
+    poolId: string | null;
+  };
+  effectiveAt: string;
 }
 
 // IP Pool Types

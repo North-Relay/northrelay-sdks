@@ -21,7 +21,7 @@ import { SubusersResource } from './resources/subusers';
 import { IdentityResource } from './resources/identity';
 import { IpPoolsResource } from './resources/ip-pools';
 import { IpsResource } from './resources/ips';
-import { InboundResource } from './resources/inbound';
+import { InboxResource } from './resources/inbox';
 import { AdminResource } from './resources/admin';
 import { KeysResource } from './resources/keys';
 import type { ClientConfig, RateLimitInfo } from './types';
@@ -60,7 +60,7 @@ export class NorthRelayClient {
   // Infrastructure
   public readonly ipPools: IpPoolsResource;
   public readonly ips: IpsResource;
-  public readonly inbound: InboundResource;
+  public readonly inbox: InboxResource;
   
   // Admin & utilities
   public readonly admin: AdminResource;
@@ -108,7 +108,7 @@ export class NorthRelayClient {
     this.identity = new IdentityResource(this.http, this.retryConfig);
     this.ipPools = new IpPoolsResource(this.http, this.retryConfig);
     this.ips = new IpsResource(this.http, this.retryConfig);
-    this.inbound = new InboundResource(this.http, this.retryConfig);
+    this.inbox = new InboxResource(this.http, this.retryConfig);
     this.admin = new AdminResource(this.http, this.retryConfig);
     this.keys = new KeysResource(this.http, this.retryConfig);
   }

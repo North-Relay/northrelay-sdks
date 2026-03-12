@@ -3,7 +3,12 @@
  */
 
 import type { HttpClient } from '../utils/http';
-import type { Template, CreateTemplateRequest, UpdateTemplateRequest, TemplateVersion, PaginatedResponse } from '../types';
+import type {
+  Template, CreateTemplateRequest, UpdateTemplateRequest, PaginatedResponse,
+  TemplateDocument, TemplateVersion, AddBlockRequest, UpdateBlockRequest,
+  TestSendRequest, ImportTemplateRequest, ImportResult, ExportedTemplate,
+  MjmlCompileResult,
+} from '../types';
 import type { RetryConfig } from '../utils/retry';
 import { withRetry } from '../utils/retry';
 
@@ -26,8 +31,8 @@ export class TemplatesResource {
     activeOnly?: boolean;
   }): Promise<PaginatedResponse<Template>> {
     const params = new URLSearchParams();
-    if (options?.page !== undefined) params.set('page', options.page.toString());
-    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
+    if (options?.page) params.set('page', options.page.toString());
+    if (options?.limit) params.set('limit', options.limit.toString());
     if (options?.search) params.set('search', options.search);
     if (options?.activeOnly) params.set('activeOnly', 'true');
 
@@ -82,7 +87,7 @@ export class TemplatesResource {
    */
   public async update(id: string, request: UpdateTemplateRequest): Promise<{ success: true; data: Template }> {
     return withRetry(
-      () => this.http.put(`/api/v1/templates/${id}`, request),
+      () => this.http.patch(`/api/v1/templates/${id}`, request),
       this.retryConfig
     );
   }
@@ -124,7 +129,7 @@ export class TemplatesResource {
     data: { subject: string; html: string; text?: string };
   }> {
     return withRetry(
-      () => this.http.post(`/api/v1/templates/${id}/preview`, { variables }),
+      () => this.http.post('/api/v1/templates/render', { templateId: id, variables }),
       this.retryConfig
     );
   }
@@ -142,16 +147,108 @@ export class TemplatesResource {
     );
   }
 
+  // ─── Block Operations ───────────────────────────────────────────────
+
   /**
-   * List version history for a template
+   * Get all blocks for a template
+   *
+   * @param id - Template ID
+   * @returns Template document with blocks
+   */
+  public async getBlocks(id: string): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.get(`/api/v1/templates/${id}/blocks`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Add a block to a template
+   *
+   * @param id - Template ID
+   * @param request - Block creation request
+   * @returns Updated template document
+   */
+  public async addBlock(id: string, request: AddBlockRequest): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.post(`/api/v1/templates/${id}/blocks`, request),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Update a block within a template
+   *
+   * @param id - Template ID
+   * @param blockId - Block ID
+   * @param request - Block update request
+   * @returns Updated template document
+   */
+  public async updateBlock(id: string, blockId: string, request: UpdateBlockRequest): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.patch(`/api/v1/templates/${id}/blocks/${blockId}`, request),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Delete a block from a template
+   *
+   * @param id - Template ID
+   * @param blockId - Block ID
+   * @returns Updated template document
+   */
+  public async deleteBlock(id: string, blockId: string): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.delete(`/api/v1/templates/${id}/blocks/${blockId}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Duplicate a block within a template
+   *
+   * @param id - Template ID
+   * @param blockId - Block ID to duplicate
+   * @returns Updated template document
+   */
+  public async duplicateBlock(id: string, blockId: string): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.post(`/api/v1/templates/${id}/blocks/${blockId}/duplicate`, {}),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Reorder blocks within a template
+   *
+   * @param id - Template ID
+   * @param blockIds - Ordered array of block IDs
+   * @returns Updated template document
+   */
+  public async reorderBlocks(id: string, blockIds: string[]): Promise<{ success: true; data: TemplateDocument }> {
+    return withRetry(
+      () => this.http.post(`/api/v1/templates/${id}/blocks/reorder`, { blockIds }),
+      this.retryConfig
+    );
+  }
+
+  // ─── Version Operations ─────────────────────────────────────────────
+
+  /**
+   * List versions of a template
+   *
+   * @param id - Template ID
+   * @param options - Pagination options
+   * @returns Paginated list of template versions
    */
   public async listVersions(id: string, options?: {
     page?: number;
     limit?: number;
-  }): Promise<{ success: true; data: { versions: TemplateVersion[] }; meta: { page: number; limit: number; total_count: number; has_more: boolean } }> {
+  }): Promise<PaginatedResponse<TemplateVersion>> {
     const params = new URLSearchParams();
-    if (options?.page !== undefined) params.set('page', options.page.toString());
-    if (options?.limit !== undefined) params.set('limit', options.limit.toString());
+    if (options?.page) params.set('page', options.page.toString());
+    if (options?.limit) params.set('limit', options.limit.toString());
 
     return withRetry(
       () => this.http.get(`/api/v1/templates/${id}/versions?${params.toString()}`),
@@ -160,60 +257,92 @@ export class TemplatesResource {
   }
 
   /**
-   * Get a specific version snapshot of a template
+   * Restore a template to a previous version
+   *
+   * @param id - Template ID
+   * @param versionId - Version ID to restore
+   * @returns Restored template
    */
-  public async getVersion(id: string, version: number): Promise<{ success: true; data: TemplateVersion }> {
+  public async restoreVersion(id: string, versionId: string): Promise<{ success: true; data: Template }> {
     return withRetry(
-      () => this.http.get(`/api/v1/templates/${id}/versions/${version}`),
+      () => this.http.post(`/api/v1/templates/${id}/versions/${versionId}/restore`, {}),
+      this.retryConfig
+    );
+  }
+
+  // ─── Test & Utility ─────────────────────────────────────────────────
+
+  /**
+   * Send a test email using a template
+   *
+   * @param id - Template ID
+   * @param request - Test send configuration
+   * @returns Send confirmation
+   */
+  public async testSend(id: string, request: TestSendRequest): Promise<{ success: true; data: { messageId: string } }> {
+    return withRetry(
+      () => this.http.post(`/api/v1/templates/${id}/test-send`, request),
       this.retryConfig
     );
   }
 
   /**
-   * Restore a template to a specific version
+   * Import one or more templates
+   *
+   * @param templates - Template(s) to import
+   * @returns Import results with counts
+   *
+   * @example
+   * ```typescript
+   * const result = await client.templates.import({
+   *   name: 'Imported Template',
+   *   subject: 'Hello {{name}}',
+   *   htmlContent: '<h1>Hello {{name}}</h1>'
+   * });
+   * ```
    */
-  public async restoreVersion(id: string, version: number): Promise<{ success: true; data: { id: string; restoredFromVersion: number; currentVersion: number; message: string } }> {
+  public async import(templates: ImportTemplateRequest | ImportTemplateRequest[]): Promise<{ success: true; data: ImportResult }> {
     return withRetry(
-      () => this.http.post(`/api/v1/templates/${id}/versions/${version}`),
+      () => this.http.post('/api/v1/templates/import', templates),
       this.retryConfig
     );
   }
 
   /**
-   * Compile MJML to HTML
+   * Export templates
+   *
+   * @param id - Optional template ID to export a single template; omit to export all
+   * @returns Exported template data
    */
-  public async compileMjml(mjml: string, options?: { minify?: boolean }): Promise<{ success: true; data: { html: string } }> {
+  public async export(id?: string): Promise<{ success: true; data: ExportedTemplate[] }> {
+    const params = new URLSearchParams();
+    if (id) params.set('id', id);
+    const query = params.toString();
+
+    return withRetry(
+      () => this.http.get(`/api/v1/templates/export${query ? `?${query}` : ''}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Compile MJML markup to HTML
+   *
+   * @param mjml - MJML markup string
+   * @param options - Compilation options
+   * @returns Compiled HTML and any errors
+   *
+   * @example
+   * ```typescript
+   * const result = await client.templates.compileMjml('<mjml><mj-body>...</mj-body></mjml>');
+   * console.log(result.data.html);
+   * ```
+   */
+  public async compileMjml(mjml: string, options?: {
+    minify?: boolean;
+  }): Promise<{ success: true; data: MjmlCompileResult }> {
     return withRetry(
       () => this.http.post('/api/v1/templates/compile-mjml', { mjml, ...options }),
-      this.retryConfig
-    );
-  }
-
-  /**
-   * Render a template with variables
-   */
-  public async render(request: {
-    templateId?: string;
-    subject?: string;
-    html?: string;
-    text?: string;
-    variables?: Record<string, string>;
-  }): Promise<{ success: true; data: { subject: string; html: string; text: string } }> {
-    return withRetry(
-      () => this.http.post('/api/v1/templates/render', request),
-      this.retryConfig
-    );
-  }
-
-  /**
-   * Generate templates from starter layouts with a brand theme
-   */
-  public async generateBulk(options?: {
-    themeId?: string;
-    layoutIds?: string[];
-  }): Promise<{ success: true; data: { created: number; skipped: number; templates: Array<{ id: string; name: string }>; errors: string[] } }> {
-    return withRetry(
-      () => this.http.post('/api/v1/templates/generate-bulk', options || {}),
       this.retryConfig
     );
   }

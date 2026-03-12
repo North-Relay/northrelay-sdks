@@ -6,6 +6,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } f
 import {
   NorthRelayError,
   AuthenticationError,
+  ScopeError,
   ValidationError,
   QuotaExceededError,
   RateLimitError,
@@ -14,7 +15,6 @@ import {
   NetworkError,
 } from '../errors';
 import type { ErrorResponse, RateLimitInfo } from '../types';
-import { SDK_VERSION } from '../version';
 
 export interface HttpClientConfig {
   baseURL: string;
@@ -33,7 +33,7 @@ export class HttpClient {
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': `NorthRelay-SDK/${SDK_VERSION}`,
+        'User-Agent': `NorthRelay-SDK/1.0.0`,
       },
     });
 
@@ -119,6 +119,9 @@ export class HttpClient {
             errorData.message,
             errorData.fix_action
           );
+
+        case 'SCOPE_INSUFFICIENT':
+          return new ScopeError(errorData.message);
 
         case 'VALIDATION_ERROR':
           return new ValidationError(

@@ -8,6 +8,8 @@ import type {
   CreateIdentityRequest,
   UpdateIdentityRequest,
   RecipientPreferences,
+  UserProfile,
+  SubscriptionUpdate,
   PaginatedResponse,
 } from '../types';
 import type { RetryConfig } from '../utils/retry';
@@ -92,6 +94,26 @@ export class IdentityResource {
   public async getRecipientPreferences(email: string): Promise<{ success: true; data: RecipientPreferences }> {
     return withRetry(
       () => this.http.get(`/api/v1/recipients/${email}/preferences`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Get current user profile including pool assignment and quota
+   */
+  public async getProfile(): Promise<{ success: true; data: UserProfile }> {
+    return withRetry(
+      () => this.http.get('/api/v1/identity/profile'),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Update subscription plan tier
+   */
+  public async updateSubscription(planTier: string): Promise<{ success: true; data: SubscriptionUpdate }> {
+    return withRetry(
+      () => this.http.patch('/api/v1/identity/subscription', { planTier }),
       this.retryConfig
     );
   }

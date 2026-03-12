@@ -30,11 +30,54 @@ export class CampaignsResource {
   }
 
   /**
+   * List campaigns with pagination and filtering
+   */
+  public async list(options?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    approvalStatus?: string;
+    search?: string;
+  }): Promise<PaginatedResponse<Campaign>> {
+    const params = new URLSearchParams();
+    if (options?.page) params.set('page', options.page.toString());
+    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.status) params.set('status', options.status);
+    if (options?.approvalStatus) params.set('approvalStatus', options.approvalStatus);
+    if (options?.search) params.set('search', options.search);
+
+    return withRetry(
+      () => this.http.get(`/api/v1/campaigns?${params.toString()}`),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Get a campaign by ID
+   */
+  public async get(id: string): Promise<{ success: true; data: Campaign }> {
+    return withRetry(
+      () => this.http.get(`/api/v1/campaigns/${id}`),
+      this.retryConfig
+    );
+  }
+
+  /**
    * Update an existing campaign
    */
   public async update(id: string, request: UpdateCampaignRequest): Promise<{ success: true; data: Campaign }> {
     return withRetry(
-      () => this.http.post(`/api/v1/campaigns/${id}`, request),
+      () => this.http.patch(`/api/v1/campaigns/${id}`, request),
+      this.retryConfig
+    );
+  }
+
+  /**
+   * Delete a campaign (only DRAFT or CANCELLED campaigns)
+   */
+  public async delete(id: string): Promise<{ success: true }> {
+    return withRetry(
+      () => this.http.delete(`/api/v1/campaigns/${id}`),
       this.retryConfig
     );
   }

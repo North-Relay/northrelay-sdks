@@ -119,7 +119,7 @@ export class ContactsResource {
    */
   public async removeTag(id: string, tag: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/contacts/${id}/tags/${encodeURIComponent(tag)}`),
+      () => this.http.delete(`/api/v1/contacts/${id}/tags/${tag}`),
       this.retryConfig
     );
   }
