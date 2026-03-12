@@ -64,7 +64,7 @@ class TemplatesResource:
             max_attempts=self._retry_config.max_attempts,
             initial_delay=self._retry_config.initial_delay,
         )
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def get(self, id: str) -> Template:
         """

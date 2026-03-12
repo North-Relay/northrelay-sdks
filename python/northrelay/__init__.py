@@ -49,6 +49,7 @@ from northrelay.types import (
     CreateContactRequest,
     ContactList,
     # Theme types
+    SocialLink,
     BrandTheme,
     CreateBrandThemeRequest,
     # Event types
@@ -65,7 +66,7 @@ from northrelay.types import (
     RateLimitInfo,
 )
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __all__ = [
     "NorthRelay",
     # Exceptions
@@ -97,6 +98,7 @@ __all__ = [
     "Contact",
     "CreateContactRequest",
     "ContactList",
+    "SocialLink",
     "BrandTheme",
     "CreateBrandThemeRequest",
     "EmailEvent",

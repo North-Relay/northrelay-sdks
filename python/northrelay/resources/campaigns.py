@@ -48,7 +48,7 @@ class CampaignsResource:
             return await self._http.get("/api/v1/campaigns", params=params)
 
         response = await with_retry(_list)
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def get(self, id: str) -> Campaign:
         """Get a campaign by ID"""

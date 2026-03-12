@@ -68,7 +68,9 @@ class EmailsResource:
             exponential_base=self._retry_config.exponential_base,
         )
 
-        return SendEmailResponse(**response_data)
+        # Unwrap { success, data: { messageId, ... } } envelope
+        data = response_data.get("data", response_data)
+        return SendEmailResponse(**data)
 
     async def send_template(
         self,

@@ -43,7 +43,7 @@ class EventsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/events", params=params)
         )
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def get(self, id: str) -> dict[str, Any]:
         """Get an event by ID"""

@@ -44,7 +44,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/contacts", params=params)
         )
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def create(self, request: CreateContactRequest) -> Contact:
         """Create a new contact"""
@@ -122,7 +122,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/contacts/lists", params=params)
         )
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def get_list(self, id: str) -> ContactList:
         """Get a contact list"""
@@ -181,7 +181,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get(f"/api/v1/contacts/lists/{id}/members", params=params)
         )
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def add_to_list(self, id: str, contact_ids: list[str]) -> dict[str, Any]:
         """Add contacts to a list"""

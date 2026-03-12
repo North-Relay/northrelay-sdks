@@ -115,14 +115,22 @@ class QuotaInfo(BaseModel):
     limit: int
     used: int
     remaining: int
-    period: str  # "daily" | "monthly"
+    period: Optional[str] = None  # "daily" | "monthly"
+
+
+class PoolInfo(BaseModel):
+    """Pool routing information"""
+
+    type: str  # "Shared" | "Isolated"
+    gateway: Optional[str] = None
 
 
 class SendEmailResponse(BaseModel):
-    """Response from sending an email"""
+    """Response from sending an email (unwrapped from API envelope)"""
 
-    success: bool
     message_id: str = Field(..., alias="messageId")
+    status: Optional[str] = None
+    pool: Optional[PoolInfo] = None
     quota: Optional[QuotaInfo] = None
 
     model_config = ConfigDict(populate_by_name=True)
@@ -140,7 +148,9 @@ class Template(BaseModel):
     html: Optional[str] = None
     mjml: Optional[str] = None
     text: Optional[str] = None
-    variables: dict[str, Any]
+    version: Optional[int] = None
+    category: Optional[str] = None
+    variables: list[str] = Field(default_factory=list)
     extracted_variables: list[str] = Field(default_factory=list, alias="extractedVariables")
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
@@ -156,7 +166,7 @@ class CreateTemplateRequest(BaseModel):
     html: Optional[str] = None
     mjml: Optional[str] = None
     text: Optional[str] = None
-    variables: Optional[dict[str, Any]] = None
+    variables: Optional[list[str]] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -169,7 +179,7 @@ class UpdateTemplateRequest(BaseModel):
     html: Optional[str] = None
     mjml: Optional[str] = None
     text: Optional[str] = None
-    variables: Optional[dict[str, Any]] = None
+    variables: Optional[list[str]] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -389,15 +399,38 @@ class ContactList(BaseModel):
 # ===== Brand Theme Types =====
 
 
+class SocialLink(BaseModel):
+    """Social media link"""
+
+    platform: str
+    url: str
+
+
 class BrandTheme(BaseModel):
     """Brand theme for email styling"""
 
     id: str
     name: str
-    colors: dict[str, str]
-    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    is_default: bool = Field(False, alias="isDefault")
+    primary_color: Optional[str] = Field(None, alias="primaryColor")
+    secondary_color: Optional[str] = Field(None, alias="secondaryColor")
+    accent_color: Optional[str] = Field(None, alias="accentColor")
+    bg_color: Optional[str] = Field(None, alias="bgColor")
+    card_bg_color: Optional[str] = Field(None, alias="cardBgColor")
+    heading_color: Optional[str] = Field(None, alias="headingColor")
+    text_color: Optional[str] = Field(None, alias="textColor")
+    muted_color: Optional[str] = Field(None, alias="mutedColor")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    company_name: Optional[str] = Field(None, alias="companyName")
+    footer_html: Optional[str] = Field(None, alias="footerHtml")
+    social_links: list[SocialLink] = Field(default_factory=list, alias="socialLinks")
+    border_radius: Optional[str] = Field(None, alias="borderRadius")
+    button_radius: Optional[str] = Field(None, alias="buttonRadius")
+    button_style: Optional[str] = Field(None, alias="buttonStyle")
+    variables: Optional[dict[str, str]] = None
     created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -406,9 +439,23 @@ class CreateBrandThemeRequest(BaseModel):
     """Request to create a brand theme"""
 
     name: str
-    colors: dict[str, str]
-    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    is_default: Optional[bool] = Field(None, alias="isDefault")
+    primary_color: Optional[str] = Field(None, alias="primaryColor")
+    secondary_color: Optional[str] = Field(None, alias="secondaryColor")
+    accent_color: Optional[str] = Field(None, alias="accentColor")
+    bg_color: Optional[str] = Field(None, alias="bgColor")
+    card_bg_color: Optional[str] = Field(None, alias="cardBgColor")
+    heading_color: Optional[str] = Field(None, alias="headingColor")
+    text_color: Optional[str] = Field(None, alias="textColor")
+    muted_color: Optional[str] = Field(None, alias="mutedColor")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    company_name: Optional[str] = Field(None, alias="companyName")
+    footer_html: Optional[str] = Field(None, alias="footerHtml")
+    social_links: Optional[list[SocialLink]] = Field(None, alias="socialLinks")
+    border_radius: Optional[str] = Field(None, alias="borderRadius")
+    button_radius: Optional[str] = Field(None, alias="buttonRadius")
+    button_style: Optional[str] = Field(None, alias="buttonStyle")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -439,15 +486,47 @@ class EmailEvent(BaseModel):
 
 
 class PaginatedResponse(BaseModel):
-    """Paginated API response"""
+    """Paginated API response from the NorthRelay API envelope.
 
-    data: list[Any]
-    total: int
-    page: int
-    limit: int
-    has_more: bool = Field(..., alias="hasMore")
+    The API returns: { success, data: { <items_key>: [...] } | [...], meta: { page, limit, total_count, has_more } }
+    This model normalises that into a flat structure.
+    """
+
+    data: list[Any] = Field(default_factory=list)
+    total: int = 0
+    page: int = 1
+    limit: int = 20
+    has_more: bool = Field(False, alias="hasMore")
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @classmethod
+    def from_api_response(cls, response: dict[str, Any]) -> "PaginatedResponse":
+        """Parse the standard NorthRelay API envelope into a PaginatedResponse.
+
+        Handles both ``{ data: [...] }`` and ``{ data: { templates: [...] } }`` shapes.
+        """
+        raw_data = response.get("data", [])
+        meta = response.get("meta", {})
+
+        # data can be a list directly or a dict with a single list value
+        if isinstance(raw_data, dict):
+            # Find the first list value inside data (e.g. data.templates, data.campaigns)
+            items: list[Any] = []
+            for v in raw_data.values():
+                if isinstance(v, list):
+                    items = v
+                    break
+        else:
+            items = raw_data if isinstance(raw_data, list) else []
+
+        return cls(
+            data=items,
+            total=meta.get("total_count", meta.get("total", len(items))),
+            page=meta.get("page", 1),
+            limit=meta.get("limit", 20),
+            has_more=meta.get("has_more", meta.get("hasMore", False)),
+        )
 
 
 class RateLimitInfo(BaseModel):

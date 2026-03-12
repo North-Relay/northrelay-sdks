@@ -32,7 +32,7 @@ class WebhooksResource:
             return await self._http.get("/api/v1/webhooks")
 
         response = await with_retry(_list)
-        return PaginatedResponse(**response)
+        return PaginatedResponse.from_api_response(response)
 
     async def get(self, id: str) -> Webhook:
         """
