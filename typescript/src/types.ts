@@ -510,6 +510,7 @@ export interface BrandTheme {
   textColor?: string;
   mutedColor?: string;
   fontFamily?: string;
+  fontName?: string;
   logoUrl?: string | null;
   companyName?: string;
   footerHtml?: string | null;
@@ -517,6 +518,7 @@ export interface BrandTheme {
   borderRadius?: string;
   buttonRadius?: string;
   buttonStyle?: ButtonStyle;
+  designStyle?: string;
   variables?: Record<string, string>;
   createdAt: string;
   updatedAt: string;
@@ -534,6 +536,7 @@ export interface CreateBrandThemeRequest {
   textColor?: string;
   mutedColor?: string;
   fontFamily?: string;
+  fontName?: string;
   logoUrl?: string | null;
   companyName?: string;
   footerHtml?: string | null;
@@ -541,6 +544,7 @@ export interface CreateBrandThemeRequest {
   borderRadius?: string;
   buttonRadius?: string;
   buttonStyle?: ButtonStyle;
+  designStyle?: string;
 }
 
 export type UpdateBrandThemeRequest = Partial<CreateBrandThemeRequest>;
