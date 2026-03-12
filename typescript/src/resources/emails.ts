@@ -64,6 +64,7 @@ export class EmailsResource {
     to: Array<{ email: string; name?: string }>,
     variables: Record<string, string>,
     options?: {
+      subject?: string;
       from?: { email: string; name?: string };
       cc?: Array<{ email: string; name?: string }>;
       bcc?: Array<{ email: string; name?: string }>;
@@ -71,16 +72,18 @@ export class EmailsResource {
       themeId?: string;
     }
   ): Promise<SendEmailResponse> {
+    const content: SendEmailRequest['content'] = { templateId };
+    if (options?.subject) {
+      content.subject = options.subject;
+    }
+
     const request: SendEmailRequest = {
       from: options?.from || { email: 'noreply@example.com' },
       to,
       cc: options?.cc,
       bcc: options?.bcc,
       replyTo: options?.replyTo,
-      content: {
-        subject: '', // Will be filled from template
-        templateId,
-      },
+      content,
       variables,
       themeId: options?.themeId,
     };

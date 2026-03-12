@@ -7,6 +7,7 @@ export type PlanTier = 'Sandbox' | 'Micro' | 'Startup' | 'Scale' | 'Enterprise';
 export type EmailStatus = 'Queued' | 'Processing' | 'Sent' | 'Delivered' | 'Bounced' | 'Failed' | 'Deferred';
 export type EventType = 'Queued' | 'Processing' | 'Sent' | 'Delivered' | 'Bounced' | 'Opened' | 'Clicked' | 'Complained' | 'Unsubscribed' | 'Dropped';
 export type EmailSource = 'API' | 'INBOX' | 'SMTP' | 'INBOUND' | 'SCHEDULED' | 'TEST';
+export type ButtonStyle = 'filled' | 'outline' | 'ghost';
 
 export interface EmailAddress {
   email: string;
@@ -14,7 +15,7 @@ export interface EmailAddress {
 }
 
 export interface EmailContent {
-  subject: string;
+  subject?: string;
   html?: string;
   text?: string;
   templateId?: string;
@@ -515,7 +516,7 @@ export interface BrandTheme {
   socialLinks?: SocialLink[];
   borderRadius?: string;
   buttonRadius?: string;
-  buttonStyle?: 'filled' | 'outline' | 'ghost';
+  buttonStyle?: ButtonStyle;
   variables?: Record<string, string>;
   createdAt: string;
   updatedAt: string;
@@ -539,7 +540,7 @@ export interface CreateBrandThemeRequest {
   socialLinks?: SocialLink[];
   borderRadius?: string;
   buttonRadius?: string;
-  buttonStyle?: 'filled' | 'outline' | 'ghost';
+  buttonStyle?: ButtonStyle;
 }
 
 export type UpdateBrandThemeRequest = Partial<CreateBrandThemeRequest>;

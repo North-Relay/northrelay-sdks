@@ -46,11 +46,17 @@ export async function withRetry<T>(
         throw lastError;
       }
 
-      // Calculate delay with exponential backoff and jitter
-      const delay = Math.min(
-        initialDelayMs * Math.pow(backoffMultiplier, attempt) + Math.random() * 1000,
-        maxDelayMs
-      );
+      // Use retry-after header for 429s, otherwise exponential backoff
+      let delay: number;
+      const retryAfter = getRetryAfter(error);
+      if (retryAfter !== null) {
+        delay = Math.min(retryAfter * 1000, maxDelayMs);
+      } else {
+        delay = Math.min(
+          initialDelayMs * Math.pow(backoffMultiplier, attempt) + Math.random() * 1000,
+          maxDelayMs
+        );
+      }
 
       await sleep(delay);
       attempt++;
@@ -80,4 +86,20 @@ function isRetryableError(error: unknown, retryableStatusCodes: number[]): boole
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getRetryAfter(error: unknown): number | null {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const headers = (error as any).response?.headers;
+    if (headers) {
+      const retryAfter = typeof headers.get === 'function'
+        ? headers.get('retry-after')
+        : headers['retry-after'];
+      if (retryAfter) {
+        const seconds = Number(retryAfter);
+        if (!isNaN(seconds)) return seconds;
+      }
+    }
+  }
+  return null;
 }

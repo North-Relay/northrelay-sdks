@@ -26,6 +26,7 @@ export type {
   EmailSource,
   EventType,
   CampaignStatus,
+  ButtonStyle,
   
   // Email types
   EmailAddress,

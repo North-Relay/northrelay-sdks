@@ -47,8 +47,8 @@ export class BrandThemeResource {
   /**
    * Update a brand theme by ID, or the default theme if no ID provided
    */
-  public async update(request: UpdateBrandThemeRequest, id?: string): Promise<{ success: true; data: BrandTheme }> {
-    const url = id ? `/api/v1/brand-theme?id=${id}` : '/api/v1/brand-theme';
+  public async update(id: string, request: UpdateBrandThemeRequest): Promise<{ success: true; data: BrandTheme }> {
+    const url = `/api/v1/brand-theme?id=${id}`;
     return withRetry(
       () => this.http.put(url, request),
       this.retryConfig
