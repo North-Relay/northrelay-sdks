@@ -142,7 +142,7 @@ export interface ExportedTemplate {
   subject: string;
   htmlContent: string;
   textContent?: string;
-  variables: unknown;
+  variables: string[];
   category: string;
   version: number;
   blockContent?: TemplateDocument;
@@ -316,15 +316,41 @@ export interface EmailEvent {
   details?: Record<string, unknown>;
 }
 
+/**
+ * Paginated API response envelope.
+ *
+ * The API returns either `{ data: T[] }` or `{ data: { <key>: T[] } }` with
+ * pagination metadata in a `meta` block.
+ */
 export interface PaginatedResponse<T> {
   success: true;
-  data: T[];
-  pagination: {
+  data: T[] | Record<string, T[] | unknown>;
+  meta: {
     page: number;
     limit: number;
-    total: number;
-    hasMore: boolean;
+    total_count: number;
+    has_more: boolean;
+    /** Some endpoints include extra meta fields (e.g. count, limit for themes). */
+    [key: string]: unknown;
   };
+}
+
+/**
+ * Extract the items array from a PaginatedResponse.
+ *
+ * Handles both `{ data: T[] }` and `{ data: { templates: T[] } }` shapes.
+ */
+export function extractItems<T>(response: PaginatedResponse<T>): T[] {
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  // Find the first array value in the data object
+  for (const value of Object.values(response.data)) {
+    if (Array.isArray(value)) {
+      return value as T[];
+    }
+  }
+  return [];
 }
 
 export interface RateLimitInfo {
@@ -465,23 +491,58 @@ export interface ContactImportJob {
 }
 
 // Brand Theme Types
-export interface BrandTheme {
-  primary_color: string;
-  secondary_color: string;
-  logo_url?: string;
-  favicon_url?: string;
-  font_family?: string;
-  font_url?: string;
-  defaultFromName?: string;
-  defaultFromEmail?: string;
-  trackingDomain?: string;
-  trackingDomainVerified?: boolean;
-  unsubscribePageTitle?: string;
-  unsubscribePageMessage?: string;
+export interface SocialLink {
+  platform: string;
+  url: string;
 }
 
-export type CreateBrandThemeRequest = BrandTheme;
-export type UpdateBrandThemeRequest = Partial<BrandTheme>;
+export interface BrandTheme {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  bgColor?: string;
+  cardBgColor?: string;
+  headingColor?: string;
+  textColor?: string;
+  mutedColor?: string;
+  fontFamily?: string;
+  logoUrl?: string | null;
+  companyName?: string;
+  footerHtml?: string | null;
+  socialLinks?: SocialLink[];
+  borderRadius?: string;
+  buttonRadius?: string;
+  buttonStyle?: 'filled' | 'outline' | 'ghost';
+  variables?: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBrandThemeRequest {
+  name: string;
+  isDefault?: boolean;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  bgColor?: string;
+  cardBgColor?: string;
+  headingColor?: string;
+  textColor?: string;
+  mutedColor?: string;
+  fontFamily?: string;
+  logoUrl?: string | null;
+  companyName?: string;
+  footerHtml?: string | null;
+  socialLinks?: SocialLink[];
+  borderRadius?: string;
+  buttonRadius?: string;
+  buttonStyle?: 'filled' | 'outline' | 'ghost';
+}
+
+export type UpdateBrandThemeRequest = Partial<CreateBrandThemeRequest>;
 
 // Analytics Types
 export interface AnalyticsQuery {

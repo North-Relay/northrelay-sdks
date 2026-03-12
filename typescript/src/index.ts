@@ -81,6 +81,7 @@ export type {
   ContactImportJob,
   
   // Brand Theme types
+  SocialLink,
   BrandTheme,
   CreateBrandThemeRequest,
   UpdateBrandThemeRequest,
@@ -141,6 +142,9 @@ export type {
   RateLimitInfo,
   ClientConfig,
 } from './types';
+
+// Re-export runtime helpers
+export { extractItems } from './types';
 
 // Re-export webhook utilities
 export { verifyWebhookSignature, parseWebhookEvent, constructWebhookPayload } from './webhooks';
