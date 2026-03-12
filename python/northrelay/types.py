@@ -427,6 +427,7 @@ class BrandTheme(BaseModel):
     text_color: Optional[str] = Field(None, alias="textColor")
     muted_color: Optional[str] = Field(None, alias="mutedColor")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+    font_name: Optional[str] = Field(None, alias="fontName")
     logo_url: Optional[str] = Field(None, alias="logoUrl")
     company_name: Optional[str] = Field(None, alias="companyName")
     footer_html: Optional[str] = Field(None, alias="footerHtml")
@@ -434,6 +435,7 @@ class BrandTheme(BaseModel):
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
     button_style: Optional[str] = Field(None, alias="buttonStyle")
+    design_style: Optional[str] = Field(None, alias="designStyle")
     variables: Optional[dict[str, str]] = None
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
@@ -455,6 +457,7 @@ class CreateBrandThemeRequest(BaseModel):
     text_color: Optional[str] = Field(None, alias="textColor")
     muted_color: Optional[str] = Field(None, alias="mutedColor")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+    font_name: Optional[str] = Field(None, alias="fontName")
     logo_url: Optional[str] = Field(None, alias="logoUrl")
     company_name: Optional[str] = Field(None, alias="companyName")
     footer_html: Optional[str] = Field(None, alias="footerHtml")
@@ -462,6 +465,7 @@ class CreateBrandThemeRequest(BaseModel):
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
     button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
+    design_style: Optional[str] = Field(None, alias="designStyle")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -480,6 +484,7 @@ class UpdateBrandThemeRequest(BaseModel):
     text_color: Optional[str] = Field(None, alias="textColor")
     muted_color: Optional[str] = Field(None, alias="mutedColor")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+    font_name: Optional[str] = Field(None, alias="fontName")
     logo_url: Optional[str] = Field(None, alias="logoUrl")
     company_name: Optional[str] = Field(None, alias="companyName")
     footer_html: Optional[str] = Field(None, alias="footerHtml")
@@ -487,6 +492,7 @@ class UpdateBrandThemeRequest(BaseModel):
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
     button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
+    design_style: Optional[str] = Field(None, alias="designStyle")
 
     model_config = ConfigDict(populate_by_name=True)
 
