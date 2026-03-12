@@ -4,11 +4,6 @@ on:
   push:
     tags:
       - 'typescript/v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to publish (e.g. 1.4.0)'
-        required: true
 
 jobs:
   publish:
@@ -21,8 +16,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('typescript/v{0}', inputs.version) || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,11 +26,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            VERSION=${GITHUB_REF#refs/tags/typescript/v}
-          fi
+          VERSION=${GITHUB_REF#refs/tags/typescript/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing version: $VERSION"
 
