@@ -67,6 +67,12 @@ class CampaignStatus(str, Enum):
     PAUSED = "paused"
 
 
+class ButtonStyle(str, Enum):
+    FILLED = "filled"
+    OUTLINE = "outline"
+    GHOST = "ghost"
+
+
 # ===== Email Types =====
 
 
@@ -82,7 +88,7 @@ class EmailAddress(BaseModel):
 class EmailContent(BaseModel):
     """Email content (subject + body)"""
 
-    subject: str
+    subject: Optional[str] = None
     html: Optional[str] = None
     text: Optional[str] = None
     template_id: Optional[str] = Field(None, alias="templateId")
@@ -427,7 +433,7 @@ class BrandTheme(BaseModel):
     social_links: list[SocialLink] = Field(default_factory=list, alias="socialLinks")
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
-    button_style: Optional[str] = Field(None, alias="buttonStyle")
+    button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
     variables: Optional[dict[str, str]] = None
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
@@ -455,7 +461,32 @@ class CreateBrandThemeRequest(BaseModel):
     social_links: Optional[list[SocialLink]] = Field(None, alias="socialLinks")
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
-    button_style: Optional[str] = Field(None, alias="buttonStyle")
+    button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class UpdateBrandThemeRequest(BaseModel):
+    """Request to update a brand theme (all fields optional for PATCH semantics)"""
+
+    name: Optional[str] = None
+    is_default: Optional[bool] = Field(None, alias="isDefault")
+    primary_color: Optional[str] = Field(None, alias="primaryColor")
+    secondary_color: Optional[str] = Field(None, alias="secondaryColor")
+    accent_color: Optional[str] = Field(None, alias="accentColor")
+    bg_color: Optional[str] = Field(None, alias="bgColor")
+    card_bg_color: Optional[str] = Field(None, alias="cardBgColor")
+    heading_color: Optional[str] = Field(None, alias="headingColor")
+    text_color: Optional[str] = Field(None, alias="textColor")
+    muted_color: Optional[str] = Field(None, alias="mutedColor")
+    font_family: Optional[str] = Field(None, alias="fontFamily")
+    logo_url: Optional[str] = Field(None, alias="logoUrl")
+    company_name: Optional[str] = Field(None, alias="companyName")
+    footer_html: Optional[str] = Field(None, alias="footerHtml")
+    social_links: Optional[list[SocialLink]] = Field(None, alias="socialLinks")
+    border_radius: Optional[str] = Field(None, alias="borderRadius")
+    button_radius: Optional[str] = Field(None, alias="buttonRadius")
+    button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -501,7 +532,9 @@ class PaginatedResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     @classmethod
-    def from_api_response(cls, response: dict[str, Any]) -> "PaginatedResponse":
+    def from_api_response(
+        cls, response: dict[str, Any], model_class: Optional[type] = None
+    ) -> "PaginatedResponse":
         """Parse the standard NorthRelay API envelope into a PaginatedResponse.
 
         Handles both ``{ data: [...] }`` and ``{ data: { templates: [...] } }`` shapes.
@@ -519,6 +552,10 @@ class PaginatedResponse(BaseModel):
                     break
         else:
             items = raw_data if isinstance(raw_data, list) else []
+
+        # Deserialize items into model objects if model_class is given
+        if model_class is not None:
+            items = [model_class(**item) if isinstance(item, dict) else item for item in items]
 
         return cls(
             data=items,

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "northrelay"
-version = "1.4.0"
+version = "1.5.0"
 description = "Official Python SDK for NorthRelay Platform API"
 readme = "README.md"
 license = { text = "MIT" }
@@ -40,7 +40,6 @@ dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.6.0",
     "pydantic[email]>=2.6.0",
-    "tenacity>=8.2.0",
     "python-dateutil>=2.8.0",
 ]
 

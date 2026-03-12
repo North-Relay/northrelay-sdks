@@ -36,7 +36,7 @@ class HttpClient:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "User-Agent": "northrelay-python/1.4.0",
+                "User-Agent": "northrelay-python/1.5.0",
             },
         )
         self._rate_limit_info: Optional[RateLimitInfo] = None

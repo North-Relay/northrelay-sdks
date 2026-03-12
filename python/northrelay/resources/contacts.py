@@ -44,7 +44,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/contacts", params=params)
         )
-        return PaginatedResponse.from_api_response(response)
+        return PaginatedResponse.from_api_response(response, model_class=Contact)
 
     async def create(self, request: CreateContactRequest) -> Contact:
         """Create a new contact"""
@@ -65,7 +65,7 @@ class ContactsResource:
     async def bulk_delete(self, ids: list[str]) -> dict[str, Any]:
         """Bulk delete contacts"""
         return await with_retry(
-            lambda: self._http.post("/api/v1/contacts", json={"ids": ids})
+            lambda: self._http.delete("/api/v1/contacts/bulk", json={"contactIds": ids})
         )
 
     async def bulk_upsert(self, contacts: list[CreateContactRequest]) -> dict[str, Any]:
@@ -122,7 +122,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/contacts/lists", params=params)
         )
-        return PaginatedResponse.from_api_response(response)
+        return PaginatedResponse.from_api_response(response, model_class=ContactList)
 
     async def get_list(self, id: str) -> ContactList:
         """Get a contact list"""
@@ -156,7 +156,7 @@ class ContactsResource:
             if description is not None:
                 payload["description"] = description
             
-            result = await self._http.post(
+            result = await self._http.patch(
                 f"/api/v1/contacts/lists/{id}",
                 json=payload,
             )
@@ -181,7 +181,7 @@ class ContactsResource:
         response = await with_retry(
             lambda: self._http.get(f"/api/v1/contacts/lists/{id}/members", params=params)
         )
-        return PaginatedResponse.from_api_response(response)
+        return PaginatedResponse.from_api_response(response, model_class=Contact)
 
     async def add_to_list(self, id: str, contact_ids: list[str]) -> dict[str, Any]:
         """Add contacts to a list"""

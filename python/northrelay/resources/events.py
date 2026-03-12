@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from northrelay.utils.http import HttpClient
 from northrelay.utils.retry import with_retry, RetryConfig
-from northrelay.types import PaginatedResponse, EventType
+from northrelay.types import PaginatedResponse, EventType, EmailEvent
 
 
 class EventsResource:
@@ -43,7 +43,7 @@ class EventsResource:
         response = await with_retry(
             lambda: self._http.get("/api/v1/events", params=params)
         )
-        return PaginatedResponse.from_api_response(response)
+        return PaginatedResponse.from_api_response(response, model_class=EmailEvent)
 
     async def get(self, id: str) -> dict[str, Any]:
         """Get an event by ID"""

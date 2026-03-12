@@ -32,7 +32,7 @@ class DomainsResource:
             return await self._http.get("/api/v1/domains")
 
         response = await with_retry(_list)
-        return PaginatedResponse.from_api_response(response)
+        return PaginatedResponse.from_api_response(response, model_class=Domain)
 
     async def get(self, id: str) -> Domain:
         """

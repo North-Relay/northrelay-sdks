@@ -78,6 +78,7 @@ class EmailsResource:
         to: list[EmailAddress],
         variables: dict[str, Any],
         *,
+        subject: Optional[str] = None,
         from_: Optional[EmailAddress] = None,
         cc: Optional[list[EmailAddress]] = None,
         bcc: Optional[list[EmailAddress]] = None,
@@ -110,13 +111,17 @@ class EmailsResource:
             ...     from_={"email": "noreply@example.com", "name": "Example"},
             ... )
         """
+        content_dict: dict[str, Any] = {"template_id": template_id}
+        if subject:
+            content_dict["subject"] = subject
+
         request = SendEmailRequest(
             from_=from_ or EmailAddress(email="noreply@example.com"),
             to=to,
             cc=cc,
             bcc=bcc,
             reply_to=reply_to,
-            content={"subject": "", "template_id": template_id},  # Subject from template
+            content=content_dict,
             variables=variables,
             theme_id=theme_id,
             tags=tags,

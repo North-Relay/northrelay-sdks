@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from northrelay.utils.http import HttpClient
 from northrelay.utils.retry import with_retry, RetryConfig
-from northrelay.types import BrandTheme, CreateBrandThemeRequest
+from northrelay.types import BrandTheme, CreateBrandThemeRequest, UpdateBrandThemeRequest
 
 
 class BrandThemeResource:
@@ -46,10 +46,10 @@ class BrandThemeResource:
         return BrandTheme(**response)
 
     async def update(
-        self, request: CreateBrandThemeRequest, id: Optional[str] = None
+        self, id: str, request: UpdateBrandThemeRequest
     ) -> BrandTheme:
-        """Update a brand theme by ID, or the default theme if no ID provided"""
-        url = f"/api/v1/brand-theme?id={id}" if id else "/api/v1/brand-theme"
+        """Update a brand theme by ID"""
+        url = f"/api/v1/brand-theme?id={id}"
         
         async def _update() -> dict[str, Any]:
             payload = request.model_dump(by_alias=True, exclude_none=True)
