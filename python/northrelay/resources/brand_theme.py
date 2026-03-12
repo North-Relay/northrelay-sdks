@@ -64,3 +64,28 @@ class BrandThemeResource:
         return await with_retry(
             lambda: self._http.delete(f"/api/v1/brand-theme?id={id}")
         )
+
+    async def set_tracking_domain(self, id: str, domain: str) -> dict[str, Any]:
+        """Set a custom tracking domain for a brand theme"""
+        async def _set() -> dict[str, Any]:
+            return await self._http.put(
+                f"/api/v1/brand-theme/{id}/tracking-domain",
+                json={"domain": domain},
+            )
+        return await with_retry(_set)
+
+    async def verify_tracking_domain(self, id: str) -> dict[str, Any]:
+        """Verify a custom tracking domain's CNAME"""
+        async def _verify() -> dict[str, Any]:
+            return await self._http.get(
+                f"/api/v1/brand-theme/{id}/tracking-domain/verify"
+            )
+        return await with_retry(_verify)
+
+    async def remove_tracking_domain(self, id: str) -> dict[str, Any]:
+        """Remove a custom tracking domain"""
+        async def _remove() -> dict[str, Any]:
+            return await self._http.delete(
+                f"/api/v1/brand-theme/{id}/tracking-domain"
+            )
+        return await with_retry(_remove)

@@ -51,12 +51,21 @@ from northrelay.types import (
     # Theme types
     BrandTheme,
     CreateBrandThemeRequest,
+    # Event types
+    EmailEvent,
+    # Enum types
+    PoolType,
+    PlanTier,
+    EmailStatus,
+    EmailSource,
+    EventType,
+    CampaignStatus,
     # Common types
     PaginatedResponse,
     RateLimitInfo,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __all__ = [
     "NorthRelay",
     # Exceptions
@@ -90,6 +99,13 @@ __all__ = [
     "ContactList",
     "BrandTheme",
     "CreateBrandThemeRequest",
+    "EmailEvent",
+    "PoolType",
+    "PlanTier",
+    "EmailStatus",
+    "EmailSource",
+    "EventType",
+    "CampaignStatus",
     "PaginatedResponse",
     "RateLimitInfo",
 ]

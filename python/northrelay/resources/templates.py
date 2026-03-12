@@ -6,7 +6,16 @@ from __future__ import annotations
 from typing import Any, Optional
 from northrelay.utils.http import HttpClient
 from northrelay.utils.retry import with_retry, RetryConfig
-from northrelay.types import Template, CreateTemplateRequest, UpdateTemplateRequest, PaginatedResponse
+from northrelay.types import (
+    Template,
+    CreateTemplateRequest,
+    UpdateTemplateRequest,
+    PaginatedResponse,
+    AddBlockRequest,
+    UpdateBlockRequest,
+    TestSendRequest,
+    ImportTemplateRequest,
+)
 
 
 class TemplatesResource:
@@ -205,3 +214,242 @@ class TemplatesResource:
 
         response = await with_retry(_extract)
         return response["data"]["variables"]
+
+    # ===== Block Operations =====
+
+    async def get_blocks(self, id: str) -> dict[str, Any]:
+        """
+        Get all blocks for a template
+
+        Args:
+            id: Template ID
+
+        Returns:
+            Block data for the template
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.get(f"/api/v1/templates/{id}/blocks")
+
+        return await with_retry(_inner)
+
+    async def add_block(self, id: str, request: AddBlockRequest) -> dict[str, Any]:
+        """
+        Add a block to a template
+
+        Args:
+            id: Template ID
+            request: Block creation request
+
+        Returns:
+            Created block data
+        """
+        async def _inner() -> dict[str, Any]:
+            payload = request.model_dump(by_alias=True, exclude_none=True)
+            return await self._http.post(f"/api/v1/templates/{id}/blocks", json=payload)
+
+        return await with_retry(_inner)
+
+    async def update_block(
+        self, id: str, block_id: str, request: UpdateBlockRequest
+    ) -> dict[str, Any]:
+        """
+        Update a block in a template
+
+        Args:
+            id: Template ID
+            block_id: Block ID
+            request: Block update request
+
+        Returns:
+            Updated block data
+        """
+        async def _inner() -> dict[str, Any]:
+            payload = request.model_dump(by_alias=True, exclude_none=True)
+            return await self._http.patch(
+                f"/api/v1/templates/{id}/blocks/{block_id}", json=payload
+            )
+
+        return await with_retry(_inner)
+
+    async def delete_block(self, id: str, block_id: str) -> dict[str, Any]:
+        """
+        Delete a block from a template
+
+        Args:
+            id: Template ID
+            block_id: Block ID
+
+        Returns:
+            Deletion confirmation
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.delete(f"/api/v1/templates/{id}/blocks/{block_id}")
+
+        return await with_retry(_inner)
+
+    async def duplicate_block(self, id: str, block_id: str) -> dict[str, Any]:
+        """
+        Duplicate a block in a template
+
+        Args:
+            id: Template ID
+            block_id: Block ID to duplicate
+
+        Returns:
+            Duplicated block data
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.post(
+                f"/api/v1/templates/{id}/blocks/{block_id}/duplicate", json={}
+            )
+
+        return await with_retry(_inner)
+
+    async def reorder_blocks(self, id: str, block_ids: list[str]) -> dict[str, Any]:
+        """
+        Reorder blocks in a template
+
+        Args:
+            id: Template ID
+            block_ids: Ordered list of block IDs
+
+        Returns:
+            Reorder confirmation
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.post(
+                f"/api/v1/templates/{id}/blocks/reorder",
+                json={"blockIds": block_ids},
+            )
+
+        return await with_retry(_inner)
+
+    # ===== Version Operations =====
+
+    async def list_versions(
+        self, id: str, *, page: int = 1, limit: int = 20
+    ) -> dict[str, Any]:
+        """
+        List versions of a template
+
+        Args:
+            id: Template ID
+            page: Page number (default: 1)
+            limit: Items per page (default: 20)
+
+        Returns:
+            Paginated list of template versions
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.get(
+                f"/api/v1/templates/{id}/versions",
+                params={"page": page, "limit": limit},
+            )
+
+        return await with_retry(_inner)
+
+    async def restore_version(self, id: str, version_id: str) -> dict[str, Any]:
+        """
+        Restore a template to a specific version
+
+        Args:
+            id: Template ID
+            version_id: Version ID to restore
+
+        Returns:
+            Restored template data
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.post(
+                f"/api/v1/templates/{id}/versions/{version_id}/restore", json={}
+            )
+
+        return await with_retry(_inner)
+
+    # ===== Test & Utility Operations =====
+
+    async def test_send(self, id: str, request: TestSendRequest) -> dict[str, Any]:
+        """
+        Send a test email using a template
+
+        Args:
+            id: Template ID
+            request: Test send request with recipient and variables
+
+        Returns:
+            Test send confirmation
+        """
+        async def _inner() -> dict[str, Any]:
+            payload = request.model_dump(by_alias=True, exclude_none=True)
+            return await self._http.post(
+                f"/api/v1/templates/{id}/test-send", json=payload
+            )
+
+        return await with_retry(_inner)
+
+    async def import_templates(
+        self, templates: ImportTemplateRequest | list[ImportTemplateRequest]
+    ) -> dict[str, Any]:
+        """
+        Import one or more templates
+
+        Args:
+            templates: Single template or list of templates to import
+
+        Returns:
+            Import result with created template data
+        """
+        async def _inner() -> dict[str, Any]:
+            if isinstance(templates, list):
+                payload = [
+                    t.model_dump(by_alias=True, exclude_none=True) for t in templates
+                ]
+            else:
+                payload = templates.model_dump(by_alias=True, exclude_none=True)
+            return await self._http.post(
+                "/api/v1/templates/import", json=payload
+            )
+
+        return await with_retry(_inner)
+
+    async def export_templates(
+        self, id: Optional[str] = None
+    ) -> dict[str, Any]:
+        """
+        Export templates
+
+        Args:
+            id: Optional template ID to export a single template.
+                If omitted, exports all templates.
+
+        Returns:
+            Exported template data
+        """
+        async def _inner() -> dict[str, Any]:
+            params = {}
+            if id is not None:
+                params["id"] = id
+            return await self._http.get("/api/v1/templates/export", params=params)
+
+        return await with_retry(_inner)
+
+    async def compile_mjml(
+        self, mjml: str, *, minify: bool = False
+    ) -> dict[str, Any]:
+        """
+        Compile MJML markup to HTML
+
+        Args:
+            mjml: MJML markup string
+            minify: Whether to minify the output HTML
+
+        Returns:
+            Compiled HTML output
+        """
+        async def _inner() -> dict[str, Any]:
+            return await self._http.post(
+                "/api/v1/templates/compile-mjml",
+                json={"mjml": mjml, "minify": minify},
+            )
+
+        return await with_retry(_inner)

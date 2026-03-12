@@ -17,31 +17,43 @@ class PoolType(str, Enum):
 
 
 class PlanTier(str, Enum):
-    FREE = "free"
-    STARTER = "starter"
-    GROWTH = "growth"
-    SCALE = "scale"
-    ENTERPRISE = "enterprise"
+    SANDBOX = "Sandbox"
+    MICRO = "Micro"
+    STARTUP = "Startup"
+    SCALE = "Scale"
+    ENTERPRISE = "Enterprise"
 
 
 class EmailStatus(str, Enum):
-    QUEUED = "queued"
-    SENDING = "sending"
-    SENT = "sent"
-    DELIVERED = "delivered"
-    FAILED = "failed"
-    BOUNCED = "bounced"
-    DEFERRED = "deferred"
+    QUEUED = "Queued"
+    PROCESSING = "Processing"
+    SENT = "Sent"
+    DELIVERED = "Delivered"
+    BOUNCED = "Bounced"
+    FAILED = "Failed"
+    DEFERRED = "Deferred"
 
 
 class EventType(str, Enum):
-    DELIVERED = "delivered"
-    OPENED = "opened"
-    CLICKED = "clicked"
-    BOUNCED = "bounced"
-    COMPLAINED = "complained"
-    UNSUBSCRIBED = "unsubscribed"
-    FAILED = "failed"
+    QUEUED = "Queued"
+    PROCESSING = "Processing"
+    SENT = "Sent"
+    DELIVERED = "Delivered"
+    BOUNCED = "Bounced"
+    OPENED = "Opened"
+    CLICKED = "Clicked"
+    COMPLAINED = "Complained"
+    UNSUBSCRIBED = "Unsubscribed"
+    DROPPED = "Dropped"
+
+
+class EmailSource(str, Enum):
+    API = "API"
+    INBOX = "INBOX"
+    SMTP = "SMTP"
+    INBOUND = "INBOUND"
+    SCHEDULED = "SCHEDULED"
+    TEST = "TEST"
 
 
 class CampaignStatus(str, Enum):
@@ -158,6 +170,65 @@ class UpdateTemplateRequest(BaseModel):
     mjml: Optional[str] = None
     text: Optional[str] = None
     variables: Optional[dict[str, Any]] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class TemplateVersion(BaseModel):
+    """Template version snapshot"""
+
+    id: str
+    version: int
+    name: str
+    subject: str
+    html_content: Optional[str] = Field(None, alias="htmlContent")
+    text_content: Optional[str] = Field(None, alias="textContent")
+    variables: list[str] = []
+    block_content: Optional[dict] = Field(None, alias="blockContent")
+    created_at: str = Field(alias="createdAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class AddBlockRequest(BaseModel):
+    """Request to add a block to a template"""
+
+    type: str
+    data: Optional[dict] = None
+    styles: Optional[dict] = None
+    position: Optional[int] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class UpdateBlockRequest(BaseModel):
+    """Request to update a block"""
+
+    data: Optional[dict] = None
+    styles: Optional[dict] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class TestSendRequest(BaseModel):
+    """Request to send a test email for a template"""
+
+    recipient_email: str = Field(alias="recipientEmail")
+    variables: Optional[dict[str, str]] = None
+    theme_id: Optional[str] = Field(None, alias="themeId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ImportTemplateRequest(BaseModel):
+    """Request to import a template"""
+
+    name: str
+    subject: str
+    html_content: Optional[str] = Field(None, alias="htmlContent")
+    text_content: Optional[str] = Field(None, alias="textContent")
+    category: Optional[str] = None
+    block_content: Optional[dict] = Field(None, alias="blockContent")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -338,6 +409,28 @@ class CreateBrandThemeRequest(BaseModel):
     colors: dict[str, str]
     logo_url: Optional[str] = Field(None, alias="logoUrl")
     font_family: Optional[str] = Field(None, alias="fontFamily")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+# ===== Event Types =====
+
+
+class EmailEvent(BaseModel):
+    """Email event record"""
+
+    id: str
+    message_id: str = Field(..., alias="messageId")
+    event_type: EventType = Field(..., alias="eventType")
+    sender: str
+    recipient: str
+    subject: str
+    status_code: Optional[str] = Field(None, alias="statusCode")
+    status_message: Optional[str] = Field(None, alias="statusMessage")
+    pool_type: PoolType = Field(..., alias="poolType")
+    source: Optional[EmailSource] = None
+    timestamp: str
+    details: Optional[dict[str, Any]] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
