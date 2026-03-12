@@ -156,8 +156,8 @@ class Template(BaseModel):
     text: Optional[str] = None
     version: Optional[int] = None
     category: Optional[str] = None
-    variables: list[str] = Field(default_factory=list)
-    extracted_variables: list[str] = Field(default_factory=list, alias="extractedVariables")
+    variables: Optional[list[str]] = Field(default_factory=list)
+    extracted_variables: Optional[list[str]] = Field(default_factory=list, alias="extractedVariables")
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
 
@@ -433,7 +433,7 @@ class BrandTheme(BaseModel):
     social_links: list[SocialLink] = Field(default_factory=list, alias="socialLinks")
     border_radius: Optional[str] = Field(None, alias="borderRadius")
     button_radius: Optional[str] = Field(None, alias="buttonRadius")
-    button_style: Optional[ButtonStyle] = Field(None, alias="buttonStyle")
+    button_style: Optional[str] = Field(None, alias="buttonStyle")
     variables: Optional[dict[str, str]] = None
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
