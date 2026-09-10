@@ -45,7 +45,6 @@ jobs:
       - name: Run tests
         working-directory: typescript
         run: npm test
-        continue-on-error: true
 
       - name: Verify package.json version
         working-directory: typescript

@@ -51,8 +51,7 @@ jobs:
         working-directory: python
         run: |
           pip install pytest pytest-asyncio
-          python -m pytest tests/ -v || echo "Warning: Tests not yet implemented"
-        continue-on-error: true
+          python -m pytest tests/ -v -o addopts=''
 
       - name: Build package
         working-directory: python
