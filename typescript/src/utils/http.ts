@@ -27,7 +27,11 @@ export class HttpClient {
   private rateLimitInfo: RateLimitInfo | null = null;
 
   constructor(config: HttpClientConfig) {
+    const base = new URL(config.baseURL);
+    if (base.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(base.hostname)) throw new Error('NorthRelay requires HTTPS');
+    if (base.username || base.password) throw new Error('Do not embed credentials in the base URL');
     this.client = axios.create({
+      maxRedirects: 0, maxContentLength: 2 * 1024 * 1024, maxBodyLength: 2 * 1024 * 1024,
       baseURL: config.baseURL,
       timeout: config.timeout,
       headers: {

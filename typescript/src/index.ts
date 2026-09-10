@@ -149,3 +149,5 @@ export { extractItems } from './types';
 
 // Re-export webhook utilities
 export { verifyWebhookSignature, parseWebhookEvent, constructWebhookPayload } from './webhooks';
+
+export * from './resources/designs';

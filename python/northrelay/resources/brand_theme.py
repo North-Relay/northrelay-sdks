@@ -52,7 +52,7 @@ class BrandThemeResource:
         url = f"/api/v1/brand-theme?id={id}"
         
         async def _update() -> dict[str, Any]:
-            payload = request.model_dump(by_alias=True, exclude_none=True)
+            payload = request.model_dump(by_alias=True, exclude_unset=True)
             result = await self._http.put(url, json=payload)
             return result["data"]
 

@@ -6,6 +6,7 @@ from northrelay.utils.http import HttpClient
 from northrelay.utils.retry import RetryConfig, DEFAULT_RETRY_CONFIG
 from northrelay.resources.emails import EmailsResource
 from northrelay.resources.templates import TemplatesResource
+from northrelay.resources.designs import DesignsResource
 from northrelay.resources.domains import DomainsResource
 from northrelay.resources.webhooks import WebhooksResource
 from northrelay.resources.campaigns import CampaignsResource
@@ -71,7 +72,7 @@ class NorthRelay:
                 "https://app.northrelay.ca/settings/api-keys"
             )
 
-        if not api_key.startswith(("nr_live_", "nr_test_")):
+        if not api_key.startswith(("nr_live_", "nr_test_", "nr_app_")):
             raise ValueError(
                 'Invalid API key format. API keys must start with "nr_live_" or "nr_test_"'
             )
@@ -94,6 +95,7 @@ class NorthRelay:
         # Initialize resources
         self.emails = EmailsResource(self._http, self._retry_config)
         self.templates = TemplatesResource(self._http, self._retry_config)
+        self.designs = DesignsResource(self._http)
         self.domains = DomainsResource(self._http, self._retry_config)
         self.webhooks = WebhooksResource(self._http, self._retry_config)
         self.campaigns = CampaignsResource(self._http, self._retry_config)

@@ -165,6 +165,9 @@ class Template(BaseModel):
 
 
 class CreateTemplateRequest(BaseModel):
+    theme_id: Optional[str] = Field(None, alias="themeId")
+    category: Optional[str] = None
+    blocks: Optional[list[dict[str, Any]]] = None
     """Request to create a template"""
 
     name: str
@@ -178,6 +181,9 @@ class CreateTemplateRequest(BaseModel):
 
 
 class UpdateTemplateRequest(BaseModel):
+    theme_id: Optional[str] = Field(None, alias="themeId")
+    category: Optional[str] = None
+    blocks: Optional[list[dict[str, Any]]] = None
     """Request to update a template"""
 
     name: Optional[str] = None
@@ -413,6 +419,15 @@ class SocialLink(BaseModel):
 
 
 class BrandTheme(BaseModel):
+    default_from_name: Optional[str] = Field(None, alias="defaultFromName")
+    default_from_email: Optional[str] = Field(None, alias="defaultFromEmail")
+    default_from_title: Optional[str] = Field(None, alias="defaultFromTitle")
+    custom_variables: Optional[dict[str, str]] = Field(None, alias="customVariables")
+    unsubscribe_page_title: Optional[str] = Field(None, alias="unsubscribePageTitle")
+    unsubscribe_page_message: Optional[str] = Field(None, alias="unsubscribePageMessage")
+    unsubscribe_submit_label: Optional[str] = Field(None, alias="unsubscribeSubmitLabel")
+    unsubscribe_success_message: Optional[str] = Field(None, alias="unsubscribeSuccessMessage")
+    unsubscribe_redirect_url: Optional[str] = Field(None, alias="unsubscribeRedirectUrl")
     """Brand theme for email styling"""
 
     id: str
@@ -444,6 +459,15 @@ class BrandTheme(BaseModel):
 
 
 class CreateBrandThemeRequest(BaseModel):
+    default_from_name: Optional[str] = Field(None, alias="defaultFromName")
+    default_from_email: Optional[str] = Field(None, alias="defaultFromEmail")
+    default_from_title: Optional[str] = Field(None, alias="defaultFromTitle")
+    custom_variables: Optional[dict[str, str]] = Field(None, alias="customVariables")
+    unsubscribe_page_title: Optional[str] = Field(None, alias="unsubscribePageTitle")
+    unsubscribe_page_message: Optional[str] = Field(None, alias="unsubscribePageMessage")
+    unsubscribe_submit_label: Optional[str] = Field(None, alias="unsubscribeSubmitLabel")
+    unsubscribe_success_message: Optional[str] = Field(None, alias="unsubscribeSuccessMessage")
+    unsubscribe_redirect_url: Optional[str] = Field(None, alias="unsubscribeRedirectUrl")
     """Request to create a brand theme"""
 
     name: str
@@ -471,6 +495,15 @@ class CreateBrandThemeRequest(BaseModel):
 
 
 class UpdateBrandThemeRequest(BaseModel):
+    default_from_name: Optional[str] = Field(None, alias="defaultFromName")
+    default_from_email: Optional[str] = Field(None, alias="defaultFromEmail")
+    default_from_title: Optional[str] = Field(None, alias="defaultFromTitle")
+    custom_variables: Optional[dict[str, str]] = Field(None, alias="customVariables")
+    unsubscribe_page_title: Optional[str] = Field(None, alias="unsubscribePageTitle")
+    unsubscribe_page_message: Optional[str] = Field(None, alias="unsubscribePageMessage")
+    unsubscribe_submit_label: Optional[str] = Field(None, alias="unsubscribeSubmitLabel")
+    unsubscribe_success_message: Optional[str] = Field(None, alias="unsubscribeSuccessMessage")
+    unsubscribe_redirect_url: Optional[str] = Field(None, alias="unsubscribeRedirectUrl")
     """Request to update a brand theme (all fields optional for PATCH semantics)"""
 
     name: Optional[str] = None
