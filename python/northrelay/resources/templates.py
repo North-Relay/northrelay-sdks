@@ -163,7 +163,8 @@ class TemplatesResource:
         return await with_retry(_delete)
 
     async def preview(
-        self, id: str, variables: dict[str, str]
+        self, id: str, variables: dict[str, str],
+        *, theme_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Preview a template with variables
@@ -171,6 +172,7 @@ class TemplatesResource:
         Args:
             id: Template ID
             variables: Template variables
+            theme_id: Optional brand theme ID for theme variable resolution
 
         Returns:
             Rendered template preview (subject, html, text)
@@ -183,9 +185,12 @@ class TemplatesResource:
             >>> print(preview["data"]["html"])
         """
         async def _preview() -> dict[str, Any]:
+            payload: dict[str, Any] = {"variables": variables}
+            if theme_id:
+                payload["themeId"] = theme_id
             return await self._http.post(
                 f"/api/v1/templates/{id}/preview",
-                json={"variables": variables},
+                json=payload,
             )
 
         return await with_retry(_preview)

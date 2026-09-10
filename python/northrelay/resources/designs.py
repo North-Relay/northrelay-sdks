@@ -45,6 +45,9 @@ class DesignsResource:
     async def rollback(self, design_id: str, version: int, expected_revision: int) -> dict[str, Any]:
         return await self._http.post(self._path(design_id) + "/rollback", json={"rollbackVersion": version, "expectedRevision": expected_revision})
 
+    async def release(self, design_id: str, version: int) -> dict[str, Any]:
+        return await self._http.get(self._path(design_id) + "/releases", params={"version": version})
+
     async def releases(self, design_id: str) -> dict[str, Any]:
         return await self._http.get(self._path(design_id) + "/releases")
 

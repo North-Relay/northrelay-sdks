@@ -30,6 +30,9 @@ class HttpClient:
         api_key: str,
         timeout: float = 30.0,
     ):
+        api_key = api_key.strip()
+        if not api_key or any(ord(c) < 33 or ord(c) > 126 for c in api_key):
+            raise ValueError("Invalid API credential formatting")
         parsed = urlsplit(base_url)
         if (parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1"}) or parsed.username or parsed.password:
             raise ValueError("NorthRelay requires HTTPS without URL credentials")
