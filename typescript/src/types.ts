@@ -64,6 +64,9 @@ export interface ErrorResponse {
 }
 
 export interface Template {
+  html: string;
+  text?: string;
+  variables?: string[];
   id: string;
   name: string;
   subject: string;
@@ -80,6 +83,8 @@ export interface Template {
 }
 
 export interface CreateTemplateRequest {
+  html?: string;
+  text?: string;
   name: string;
   subject: string;
   htmlContent?: string;
@@ -92,6 +97,11 @@ export interface CreateTemplateRequest {
 }
 
 export interface UpdateTemplateRequest {
+  html?: string;
+  text?: string;
+  blocks?: TemplateDocument;
+  variables?: string[];
+  category?: string;
   name?: string;
   subject?: string;
   htmlContent?: string;
@@ -163,6 +173,7 @@ export interface UpdateBlockRequest {
 }
 
 export interface TestSendRequest {
+  fromEmail?: string;
   recipientEmail: string;
   variables?: Record<string, string>;
   themeId?: string;
@@ -498,6 +509,15 @@ export interface SocialLink {
 }
 
 export interface BrandTheme {
+  defaultFromName?: string | null;
+  defaultFromEmail?: string | null;
+  defaultFromTitle?: string | null;
+  customVariables?: Record<string, string>;
+  unsubscribePageTitle?: string | null;
+  unsubscribePageMessage?: string | null;
+  unsubscribeSubmitLabel?: string | null;
+  unsubscribeSuccessMessage?: string | null;
+  unsubscribeRedirectUrl?: string | null;
   id: string;
   name: string;
   isDefault: boolean;
@@ -525,6 +545,15 @@ export interface BrandTheme {
 }
 
 export interface CreateBrandThemeRequest {
+  defaultFromName?: string | null;
+  defaultFromEmail?: string | null;
+  defaultFromTitle?: string | null;
+  customVariables?: Record<string, string>;
+  unsubscribePageTitle?: string | null;
+  unsubscribePageMessage?: string | null;
+  unsubscribeSubmitLabel?: string | null;
+  unsubscribeSuccessMessage?: string | null;
+  unsubscribeRedirectUrl?: string | null;
   name: string;
   isDefault?: boolean;
   primaryColor?: string;

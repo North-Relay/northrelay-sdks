@@ -2,6 +2,7 @@
  * Main NorthRelay SDK client
  */
 
+import { DesignsResource } from './resources/designs';
 import { HttpClient } from './utils/http';
 import { withRetry, DEFAULT_RETRY_CONFIG } from './utils/retry';
 import { EmailsResource } from './resources/emails';
@@ -32,6 +33,7 @@ export class NorthRelayClient {
 
   // Core resources
   public readonly emails: EmailsResource;
+  public readonly designs: DesignsResource;
   public readonly templates: TemplatesResource;
   public readonly domains: DomainsResource;
   public readonly webhooks: WebhooksResource;
@@ -71,8 +73,8 @@ export class NorthRelayClient {
       throw new Error('API key is required. Get your API key at https://app.northrelay.ca/settings/api-keys');
     }
 
-    if (!config.apiKey.startsWith('nr_live_') && !config.apiKey.startsWith('nr_test_')) {
-      throw new Error('Invalid API key format. API keys must start with "nr_live_" or "nr_test_"');
+    if (!config.apiKey.startsWith('nr_live_') && !config.apiKey.startsWith('nr_test_') && !config.apiKey.startsWith('nr_app_')) {
+      throw new Error('Invalid API key format. API keys must start with "nr_live_" or "nr_test_" or "nr_app_"');
     }
 
     const baseUrl = config.baseUrl || 'https://app.northrelay.ca';
@@ -92,6 +94,7 @@ export class NorthRelayClient {
 
     // Initialize resource modules
     this.emails = new EmailsResource(this.http, this.retryConfig);
+    this.designs = new DesignsResource(this.http);
     this.templates = new TemplatesResource(this.http, this.retryConfig);
     this.domains = new DomainsResource(this.http, this.retryConfig);
     this.webhooks = new WebhooksResource(this.http, this.retryConfig);

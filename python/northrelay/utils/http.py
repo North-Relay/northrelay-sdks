@@ -1,10 +1,12 @@
 """HTTP client with retry and rate limiting"""
 
 import httpx
+from urllib.parse import urlsplit
 from typing import Any, Optional, TypeVar, cast
 from datetime import datetime
 
 from northrelay.exceptions import (
+    NorthRelayError,
     AuthenticationError,
     ScopeError,
     ValidationError,
@@ -28,6 +30,9 @@ class HttpClient:
         api_key: str,
         timeout: float = 30.0,
     ):
+        parsed = urlsplit(base_url)
+        if (parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1"}) or parsed.username or parsed.password:
+            raise ValueError("NorthRelay requires HTTPS without URL credentials")
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.client = httpx.AsyncClient(
@@ -64,9 +69,11 @@ class HttpClient:
         """Convert HTTP error responses to exceptions"""
         status_code = response.status_code
         
+        error_data = {}
         try:
             error_data = response.json()
-            error_message = error_data.get("message", error_data.get("error", response.text))
+            nested = error_data.get("error", {})
+            error_message = nested.get("message", response.text) if isinstance(nested, dict) else str(error_data.get("message", nested))
         except Exception:
             error_message = response.text or f"HTTP {status_code} error"
 
@@ -82,6 +89,10 @@ class HttpClient:
         if status_code == 400:
             errors = error_data.get("errors") if isinstance(error_data, dict) else None
             raise ValidationError(error_message, errors=errors)
+
+        if status_code == 409:
+            nested = error_data.get("error", {})
+            raise NorthRelayError(error_message, status_code=409, code=nested.get("code") if isinstance(nested, dict) else None)
 
         # 404 - Not found
         if status_code == 404:
