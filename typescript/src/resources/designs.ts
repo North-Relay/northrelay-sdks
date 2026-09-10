@@ -18,20 +18,23 @@ export interface DesignCapabilities {
   limits: { templates: number | null; themes: number | null }; usage: { templates: number; themes: number };
   verifiedDomains: Array<{ hostname: string }>;
 }
+export type EmailDesignSummary = Omit<EmailDesign, 'draft'> & { draft: Pick<EmailDesignDraft, 'name' | 'subject' | 'category'> };
+export type EmailDesignReleaseSummary = Omit<EmailDesignRelease, 'snapshot'> & { snapshot?: EmailDesignDraft };
 type Result<T> = { success: true; data: T };
 const path = (id: string) => `/api/v1/designs/${encodeURIComponent(id)}`;
 /** Published email designs. Writes are explicit; sends require a stable idempotency key. */
 export class DesignsResource {
   constructor(private http: HttpClient) {}
   capabilities(): Promise<Result<DesignCapabilities>> { return this.http.get('/api/v1/capabilities'); }
-  list(applicationKey?: string): Promise<Result<EmailDesign[]>> { return this.http.get(`/api/v1/designs${applicationKey ? `?applicationKey=${encodeURIComponent(applicationKey)}` : ''}`); }
+  list(applicationKey?: string): Promise<Result<EmailDesignSummary[]>> { return this.http.get(`/api/v1/designs${applicationKey ? `?applicationKey=${encodeURIComponent(applicationKey)}` : ''}`); }
   get(id: string): Promise<Result<EmailDesign>> { return this.http.get(path(id)); }
   create(input: { applicationKey: string; key: string; locale?: string; draft: EmailDesignDraft }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs', input); }
   update(id: string, draft: EmailDesignDraft, expectedRevision: number): Promise<Result<EmailDesign>> { return this.http.patch(path(id), { draft, expectedRevision }); }
   preview(id: string, input: { variables?: Record<string, unknown>; sample?: boolean; published?: boolean; version?: number } = {}): Promise<Result<{ html: string; text: string; subject: string; renderer: string; releaseId: string | null; contentHash: string; sample: boolean }>> { return this.http.post(`${path(id)}/preview`, input); }
   publish(id: string, expectedRevision: number): Promise<Result<EmailDesignRelease>> { return this.http.post(`${path(id)}/publish`, { expectedRevision }); }
   rollback(id: string, rollbackVersion: number, expectedRevision: number): Promise<Result<EmailDesignRelease>> { return this.http.post(`${path(id)}/rollback`, { rollbackVersion, expectedRevision }); }
-  releases(id: string): Promise<Result<EmailDesignRelease[]>> { return this.http.get(`${path(id)}/releases`); }
+  release(id: string, version: number): Promise<Result<EmailDesignRelease>> { return this.http.get(`${path(id)}/releases?version=${version}`); }
+  releases(id: string): Promise<Result<EmailDesignReleaseSummary[]>> { return this.http.get(`${path(id)}/releases`); }
   send(id: string, input: { to: Array<{ email: string; name?: string }>; variables?: Record<string, unknown>; version?: number; metadata?: Record<string, string> }, idempotencyKey: string): Promise<Result<{ messageId: string; status: string }>> {
     return this.http.post(`${path(id)}/send`, input, { headers: { 'Idempotency-Key': idempotencyKey } });
   }

@@ -27,6 +27,8 @@ export class HttpClient {
   private rateLimitInfo: RateLimitInfo | null = null;
 
   constructor(config: HttpClientConfig) {
+    const apiKey = config.apiKey.trim();
+    if (!/^[\x21-\x7e]+$/.test(apiKey)) throw new Error('Invalid API credential formatting');
     const base = new URL(config.baseURL);
     if (base.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(base.hostname)) throw new Error('NorthRelay requires HTTPS');
     if (base.username || base.password) throw new Error('Do not embed credentials in the base URL');
@@ -35,7 +37,7 @@ export class HttpClient {
       baseURL: config.baseURL,
       timeout: config.timeout,
       headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'User-Agent': `NorthRelay-SDK/1.5.0`,
       },
