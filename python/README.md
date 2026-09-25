@@ -281,3 +281,36 @@ Contributions welcome! Please open an issue first to discuss proposed changes.
 ---
 
 **Made with ❤️ by the NorthRelay team**
+
+
+## Hosted catalog and shared brands (1.7)
+
+NorthRelay stores the templates and brands; clients can keep local drafts while editing.
+Use an application-scoped credential with `templates:read` and `templates:write` scopes. For a credential
+restricted to one application, the server derives its application key on adoption
+and brand creation. Account-wide credentials must supply `application_key`.
+
+```python
+catalog = (await client.designs.catalog())["data"]
+starter = catalog["gallery"][0]
+brand = (await client.designs.create_brand(theme={
+    "name": "My application", "companyName": "My company", "primaryColor": "#6254e8",
+}))["data"]
+reviewed = (await client.designs.inspect_template(
+    kind=starter["kind"], id=starter["id"], brand_id=brand["id"],
+))["data"]
+# Show reviewed["preview"] before adopting the inspected source digest.
+design = (await client.designs.adopt_template(
+    **reviewed["source"], brand_id=brand["id"],
+))["data"]
+plan = await client.designs.sync_source(
+    design["id"], expected_revision=design["revision"],
+    source_digest=reviewed["source"]["digest"], apply=False,
+)
+```
+
+Follow `nextCursor` with `catalog(cursor=...)` for the remaining hosted templates.
+Use `brands()` to select a brand, `update_brand()` with its `expected_updated_at`
+timestamp to edit it, and `bind_brand()` with the design's `expected_revision` to
+change its brand. On HTTP 409, reload and review the latest state before retrying.
+Inspecting and planning sync do not publish or send; publication remains explicit.

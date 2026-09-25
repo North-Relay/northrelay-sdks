@@ -24,6 +24,16 @@ class DesignsResource:
     async def list(self, application_key: str | None = None) -> dict[str, Any]:
         return await self._http.get("/api/v1/designs", params={"applicationKey": application_key} if application_key else {})
 
+    async def list_page(self, *, application_key: str | None = None, cursor: str | None = None, search: str | None = None, brand_id: str | None = None, category: str | None = None, status: str = "all", limit: int = 50) -> dict[str, Any]:
+        params = {"applicationKey": application_key, "cursor": cursor, "search": search, "brandId": brand_id, "category": category, "status": status, "limit": limit, "paginated": "true"}
+        return await self._http.get("/api/v1/designs", params={k: v for k, v in params.items() if v is not None})
+
+    async def set_lifecycle(self, design_id: str, *, retired: bool, expected_revision: int, replacement: dict[str, str] | None = None) -> dict[str, Any]:
+        body = {"retired": retired, "expectedRevision": expected_revision}
+        if replacement is not None:
+            body["replacement"] = replacement
+        return await self._http.patch(self._path(design_id) + "/lifecycle", json=body)
+
     async def get(self, design_id: str) -> dict[str, Any]:
         return await self._http.get(self._path(design_id))
 
@@ -70,3 +80,35 @@ class DesignsResource:
 
     async def upload_logo(self, application_key: str, png_base64: str) -> dict[str, Any]:
         return await self._http.post("/api/v1/designs/assets", json={"applicationKey": application_key, "pngBase64": png_base64})
+
+    async def catalog(self, cursor: str | None = None, *, search: str | None = None, brand_id: str | None = None, category: str | None = None) -> dict[str, Any]:
+        return await self._http.get("/api/v1/designs/catalog", params={k: v for k, v in {"cursor": cursor, "search": search, "brandId": brand_id, "category": category}.items() if v is not None})
+
+    async def inspect_template(self, *, kind: str, id: str, brand_id: str | None = None) -> dict[str, Any]:
+        return await self._http.post("/api/v1/designs/catalog", json={"kind": kind, "id": id, **({"brandId": brand_id} if brand_id else {})})
+
+    async def adopt_template(self, *, kind: str, id: str, digest: str, application_key: str | None = None, brand_id: str | None = None) -> dict[str, Any]:
+        body = {"kind": kind, "id": id, "digest": digest}
+        if application_key is not None:
+            body["applicationKey"] = application_key
+        if brand_id is not None:
+            body["brandId"] = brand_id
+        return await self._http.post("/api/v1/designs/catalog/adopt", json=body)
+
+    async def sync_source(self, design_id: str, *, expected_revision: int, source_digest: str, apply: bool = False) -> dict[str, Any]:
+        return await self._http.post(self._path(design_id) + "/sync", json={"expectedRevision": expected_revision, "sourceDigest": source_digest, "apply": apply})
+
+    async def brands(self) -> dict[str, Any]:
+        return await self._http.get("/api/v1/designs/brands")
+
+    async def create_brand(self, *, theme: dict[str, Any], application_key: str | None = None) -> dict[str, Any]:
+        body = {"theme": theme}
+        if application_key is not None:
+            body["applicationKey"] = application_key
+        return await self._http.post("/api/v1/designs/brands", json=body)
+
+    async def update_brand(self, brand_id: str, *, theme: dict[str, Any], expected_updated_at: str) -> dict[str, Any]:
+        return await self._http.patch("/api/v1/designs/brands/" + quote(brand_id, safe=""), json={"theme": theme, "expectedUpdatedAt": expected_updated_at})
+
+    async def bind_brand(self, design_id: str, *, brand_id: str, expected_revision: int) -> dict[str, Any]:
+        return await self._http.post(self._path(design_id) + "/brand", json={"brandId": brand_id, "expectedRevision": expected_revision})

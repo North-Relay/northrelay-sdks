@@ -68,7 +68,7 @@ from northrelay.types import (
     RateLimitInfo,
 )
 
-__version__ = "1.6.0"
+__version__ = "1.8.0"
 __all__ = [
     "NorthRelay",
     # Exceptions
