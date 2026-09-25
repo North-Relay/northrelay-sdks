@@ -9,7 +9,10 @@ export interface EmailDesignDraft {
   brand: Partial<CreateBrandThemeRequest>;
   variables?: Record<string, DesignVariable>;
 }
-export interface EmailDesign { id: string; applicationKey: string; key: string; locale: string; draft: EmailDesignDraft; revision: number; publishedVersion: number | null; }
+export type CatalogSource = { kind: "template" | "gallery"; id: string };
+export type CatalogItem = CatalogSource & { name: string; subject: string; category: string; shared: boolean; description?: string };
+export interface DesignBrand { id: string; updatedAt: string; applicationKey: string | null; editable: boolean; theme: Partial<CreateBrandThemeRequest>; }
+export interface EmailDesign { retiredAt?: string | null; replacementId?: string | null; replacementKind?: "DESIGN" | "TEMPLATE" | null; brandThemeId?: string | null; source?: (CatalogSource & { digest: string }) | null; id: string; applicationKey: string; key: string; locale: string; draft: EmailDesignDraft; revision: number; publishedVersion: number | null; }
 export interface EmailDesignRelease { id: string; designId: string; version: number; snapshot: EmailDesignDraft; renderer: string; digest: string; revision?: number; }
 export interface DesignManifest { schemaVersion: 1; applicationKey: string; dryRun?: boolean; entries: Array<{ key: string; locale?: string; draft: EmailDesignDraft; expectedRevision?: number }>; }
 export interface DesignCapabilities {
@@ -20,13 +23,26 @@ export interface DesignCapabilities {
 }
 export type EmailDesignSummary = Omit<EmailDesign, 'draft'> & { draft: Pick<EmailDesignDraft, 'name' | 'subject' | 'category'> };
 export type EmailDesignReleaseSummary = Omit<EmailDesignRelease, 'snapshot'> & { snapshot?: EmailDesignDraft };
+export interface DesignListOptions { applicationKey?: string; cursor?: string; search?: string; brandId?: string; category?: EmailDesignDraft['category']; status?: 'all' | 'active' | 'retired'; limit?: number; }
+export type CatalogOptions = Pick<DesignListOptions, 'cursor' | 'search' | 'brandId' | 'category'>;
+const queryString = (options: object) => new URLSearchParams(Object.entries(options).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)] as [string, string])).toString();
 type Result<T> = { success: true; data: T };
 const path = (id: string) => `/api/v1/designs/${encodeURIComponent(id)}`;
 /** Published email designs. Writes are explicit; sends require a stable idempotency key. */
 export class DesignsResource {
   constructor(private http: HttpClient) {}
+  catalog(options?: string | CatalogOptions): Promise<Result<{ items: CatalogItem[]; gallery: CatalogItem[]; nextCursor: string | null }>> { const query = queryString(typeof options === 'string' ? { cursor: options } : options ?? {}); return this.http.get(`/api/v1/designs/catalog${query ? `?${query}` : ''}`); }
+  inspectTemplate(source: CatalogSource & { brandId?: string }): Promise<Result<{ source: CatalogSource & { digest: string }; draft: EmailDesignDraft; preview: { html: string; text: string; subject: string } }>> { return this.http.post('/api/v1/designs/catalog', source); }
+  adoptTemplate(input: CatalogSource & { digest: string; applicationKey?: string; brandId?: string }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs/catalog/adopt', input); }
+  syncSource(id: string, input: { expectedRevision: number; sourceDigest: string; apply?: boolean }): Promise<Result<unknown>> { return this.http.post(`${path(id)}/sync`, input); }
+  brands(): Promise<Result<DesignBrand[]>> { return this.http.get('/api/v1/designs/brands'); }
+  createBrand(input: { applicationKey?: string; theme: Omit<Partial<CreateBrandThemeRequest>, 'isDefault' | 'name'> & { name: string } }): Promise<Result<DesignBrand>> { return this.http.post('/api/v1/designs/brands', input); }
+  updateBrand(id: string, input: { expectedUpdatedAt: string; theme: Omit<Partial<CreateBrandThemeRequest>, 'isDefault'> }): Promise<Result<DesignBrand>> { return this.http.patch(`/api/v1/designs/brands/${encodeURIComponent(id)}`, input); }
+  bindBrand(id: string, brandId: string, expectedRevision: number): Promise<Result<EmailDesign>> { return this.http.post(`${path(id)}/brand`, { brandId, expectedRevision }); }
   capabilities(): Promise<Result<DesignCapabilities>> { return this.http.get('/api/v1/capabilities'); }
   list(applicationKey?: string): Promise<Result<EmailDesignSummary[]>> { return this.http.get(`/api/v1/designs${applicationKey ? `?applicationKey=${encodeURIComponent(applicationKey)}` : ''}`); }
+  listPage(options: DesignListOptions = {}): Promise<Result<{ items: EmailDesignSummary[]; nextCursor: string | null }>> { return this.http.get(`/api/v1/designs?${queryString({ ...options, paginated: true })}`); }
+  setLifecycle(id: string, input: { retired: boolean; expectedRevision: number; replacement?: { id: string; kind: 'TEMPLATE' | 'DESIGN' } }): Promise<Result<{ id: string; retired: boolean }>> { return this.http.patch(`${path(id)}/lifecycle`, input); }
   get(id: string): Promise<Result<EmailDesign>> { return this.http.get(path(id)); }
   create(input: { applicationKey: string; key: string; locale?: string; draft: EmailDesignDraft }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs', input); }
   update(id: string, draft: EmailDesignDraft, expectedRevision: number): Promise<Result<EmailDesign>> { return this.http.patch(path(id), { draft, expectedRevision }); }

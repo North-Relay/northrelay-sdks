@@ -533,6 +533,12 @@ export interface BrandTheme {
   fontName?: string;
   logoUrl?: string | null;
   companyName?: string;
+  companyAddress?: string | null;
+  companyCity?: string | null;
+  companyPhone?: string | null;
+  companyEmail?: string | null;
+  supportEmail?: string | null;
+  websiteUrl?: string | null;
   footerHtml?: string | null;
   socialLinks?: SocialLink[];
   borderRadius?: string;
@@ -568,6 +574,12 @@ export interface CreateBrandThemeRequest {
   fontName?: string;
   logoUrl?: string | null;
   companyName?: string;
+  companyAddress?: string | null;
+  companyCity?: string | null;
+  companyPhone?: string | null;
+  companyEmail?: string | null;
+  supportEmail?: string | null;
+  websiteUrl?: string | null;
   footerHtml?: string | null;
   socialLinks?: SocialLink[];
   borderRadius?: string;

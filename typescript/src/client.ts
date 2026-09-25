@@ -2,6 +2,7 @@
  * Main NorthRelay SDK client
  */
 
+import { CredentialsResource } from './resources/credentials';
 import { DesignsResource } from './resources/designs';
 import { HttpClient } from './utils/http';
 import { withRetry, DEFAULT_RETRY_CONFIG } from './utils/retry';
@@ -33,6 +34,7 @@ export class NorthRelayClient {
 
   // Core resources
   public readonly emails: EmailsResource;
+  public readonly credentials: CredentialsResource;
   public readonly designs: DesignsResource;
   public readonly templates: TemplatesResource;
   public readonly domains: DomainsResource;
@@ -94,6 +96,7 @@ export class NorthRelayClient {
 
     // Initialize resource modules
     this.emails = new EmailsResource(this.http, this.retryConfig);
+    this.credentials = new CredentialsResource(this.http);
     this.designs = new DesignsResource(this.http);
     this.templates = new TemplatesResource(this.http, this.retryConfig);
     this.domains = new DomainsResource(this.http, this.retryConfig);

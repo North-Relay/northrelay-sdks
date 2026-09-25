@@ -151,3 +151,5 @@ export { extractItems } from './types';
 export { verifyWebhookSignature, parseWebhookEvent, constructWebhookPayload } from './webhooks';
 
 export * from './resources/designs';
+
+export * from './resources/credentials';

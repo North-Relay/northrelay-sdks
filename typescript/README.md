@@ -99,3 +99,28 @@ try {
 ## License
 
 MIT
+
+
+### Hosted catalog and shared brands (1.7.0)
+
+NorthRelay owns saved templates and brands. Use an application-scoped credential with `templates:read` and `templates:write` scopes for this workflow. With a credential restricted to one application, the API derives its namespace and the adopted template's stable key. Use a verified sender permitted by the credential when setting brand defaults.
+
+```typescript
+const { data: catalog } = await client.designs.catalog();
+const starter = catalog.gallery[0];
+const { data: brand } = await client.designs.createBrand({
+  theme: { name: 'My application', companyName: 'My company', primaryColor: '#6254e8' },
+});
+const { data: reviewed } = await client.designs.inspectTemplate({
+  kind: starter.kind, id: starter.id, brandId: brand.id,
+});
+// Show reviewed.preview to the operator before adoption.
+const { data: design } = await client.designs.adoptTemplate({
+  ...reviewed.source, brandId: brand.id,
+});
+const plan = await client.designs.syncSource(design.id, {
+  expectedRevision: design.revision, sourceDigest: reviewed.source.digest, apply: false,
+});
+```
+
+Use `catalog(nextCursor)` to load subsequent account-template pages. `brands()`, `updateBrand(id, { expectedUpdatedAt, theme })` and `bindBrand(designId, brandId, expectedRevision)` manage the same records as the NorthRelay dashboard. For source updates, review the returned plan, then apply with its `sourceDigest` and the current draft revision. On a 409 conflict, reload and review rather than overwriting newer changes. Adoption, brand edits and synchronization only change drafts; publication is explicit. Account-wide credentials must supply an application key where required.
