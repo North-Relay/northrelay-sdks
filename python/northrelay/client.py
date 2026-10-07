@@ -12,6 +12,8 @@ from northrelay.resources.domains import DomainsResource
 from northrelay.resources.webhooks import WebhooksResource
 from northrelay.resources.campaigns import CampaignsResource
 from northrelay.resources.contacts import ContactsResource
+from northrelay.resources.subscriptions import SubscriptionsResource
+from northrelay.resources.forms import FormsResource
 from northrelay.resources.brand_theme import BrandThemeResource
 from northrelay.resources.api_keys import ApiKeysResource
 from northrelay.resources.events import EventsResource
@@ -102,6 +104,8 @@ class NorthRelay:
         self.webhooks = WebhooksResource(self._http, self._retry_config)
         self.campaigns = CampaignsResource(self._http, self._retry_config)
         self.contacts = ContactsResource(self._http, self._retry_config)
+        self.subscriptions = SubscriptionsResource(self._http, self._retry_config)
+        self.forms = FormsResource(self._http, self._retry_config)
         self.brand_theme = BrandThemeResource(self._http, self._retry_config)
         self.api_keys = ApiKeysResource(self._http, self._retry_config)
         self.events = EventsResource(self._http, self._retry_config)
@@ -113,6 +117,8 @@ class NorthRelay:
         # Suppression management
         self.suppressions = SuppressionsResource(self._http, self._retry_config)
         self.suppression_groups = SuppressionGroupsResource(self._http, self._retry_config)
+        # Topics are suppression groups; same resource under its product name
+        self.topics = self.suppression_groups
         
         # User management
         self.subusers = SubusersResource(self._http, self._retry_config)

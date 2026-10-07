@@ -1,12 +1,22 @@
-"""Resource module"""
+"""Webhooks resource - webhook endpoints, secret rotation and test delivery.
+
+Event names are listed in ``northrelay.WebhookEventType`` and payloads are
+described by ``northrelay.WebhookPayload``. Writes are not retried
+automatically.
+"""
+
 from __future__ import annotations
 
-"""Webhooks resource - Webhook management and delivery tracking"""
-
 from typing import Any
+from urllib.parse import quote
+
+from northrelay.types import CreateWebhookRequest, PaginatedResponse, UpdateWebhookRequest, Webhook
 from northrelay.utils.http import HttpClient
-from northrelay.utils.retry import with_retry, RetryConfig
-from northrelay.types import Webhook, CreateWebhookRequest, UpdateWebhookRequest, PaginatedResponse
+from northrelay.utils.retry import RetryConfig, with_retry
+
+
+def _path(id: str, suffix: str = "") -> str:
+    return "/api/v1/webhooks/" + quote(id, safe="") + suffix
 
 
 class WebhooksResource:
@@ -16,155 +26,66 @@ class WebhooksResource:
         self._http = http
         self._retry_config = retry_config
 
-    async def list(self) -> PaginatedResponse:
+    async def list(self, *, active: bool | None = None) -> PaginatedResponse:
         """
-        List all webhooks
-
-        Returns:
-            PaginatedResponse with webhooks
+        List webhooks (``secret`` is never returned here, only ``secret_prefix``)
 
         Example:
             >>> webhooks = await client.webhooks.list()
             >>> for webhook in webhooks.data:
-            ...     print(f"{webhook.url}: active={webhook.active}")
+            ...     print(f"{webhook.url}: {webhook.events}")
         """
-        async def _list() -> dict[str, Any]:
-            return await self._http.get("/api/v1/webhooks")
-
-        response = await with_retry(_list)
-        return PaginatedResponse.from_api_response(response, model_class=Webhook)
+        params = {"active": "true" if active else "false"} if active is not None else {}
+        response = await with_retry(lambda: self._http.get("/api/v1/webhooks", params=params))
+        items = [Webhook(**w) for w in response.get("webhooks", [])]
+        return PaginatedResponse.model_validate(
+            {"data": items, "total": len(items), "page": 1, "limit": len(items) or 20}
+        )
 
     async def get(self, id: str) -> Webhook:
-        """
-        Get a webhook by ID
-
-        Args:
-            id: Webhook ID
-
-        Returns:
-            Webhook details
-
-        Example:
-            >>> webhook = await client.webhooks.get("wh_abc123")
-            >>> print(webhook.events)  # ['delivered', 'bounced']
-        """
-        async def _get() -> dict[str, Any]:
-            result = await self._http.get(f"/api/v1/webhooks/{id}")
-            return result["data"]
-
-        response = await with_retry(_get)
-        return Webhook(**response)
+        """Get a webhook by ID (24-hour delivery stats are in ``webhook.stats``)"""
+        response = await with_retry(lambda: self._http.get(_path(id)))
+        return Webhook(**{**response["webhook"], "stats": response.get("stats")})
 
     async def create(self, request: CreateWebhookRequest) -> Webhook:
         """
-        Create a new webhook
-
-        Args:
-            request: Webhook creation request
-
-        Returns:
-            Created webhook with secret
+        Create a webhook. The returned ``secret`` is shown only once: store it.
 
         Example:
-            >>> from northrelay.types import EventType
+            >>> from northrelay import WebhookEventType
             >>> webhook = await client.webhooks.create(
             ...     CreateWebhookRequest(
             ...         url="https://example.com/webhooks/northrelay",
-            ...         events=[EventType.DELIVERED, EventType.BOUNCED],
-            ...         active=True,
+            ...         events=[WebhookEventType.EMAIL_DELIVERED,
+            ...                 WebhookEventType.LIST_MEMBER_ADDED],
             ...     )
             ... )
             >>> print(f"Secret: {webhook.secret}")
         """
-        async def _create() -> dict[str, Any]:
-            payload = request.model_dump(by_alias=True, exclude_none=True)
-            result = await self._http.post("/api/v1/webhooks", json=payload)
-            return result["data"]
-
-        response = await with_retry(_create)
-        return Webhook(**response)
+        payload = request.model_dump(by_alias=True, exclude_none=True, exclude={"active"})
+        result = await self._http.post("/api/v1/webhooks", json=payload)
+        return Webhook(**{**result["webhook"], "secret": result.get("secret")})
 
     async def update(self, id: str, request: UpdateWebhookRequest) -> Webhook:
-        """
-        Update a webhook
-
-        Args:
-            id: Webhook ID
-            request: Webhook update request
-
-        Returns:
-            Updated webhook
-
-        Example:
-            >>> webhook = await client.webhooks.update(
-            ...     "wh_abc123",
-            ...     UpdateWebhookRequest(active=False),
-            ... )
-        """
-        async def _update() -> dict[str, Any]:
-            payload = request.model_dump(by_alias=True, exclude_none=True)
-            result = await self._http.put(f"/api/v1/webhooks/{id}", json=payload)
-            return result["data"]
-
-        response = await with_retry(_update)
-        return Webhook(**response)
+        """Update a webhook's URL, events, description or active flag"""
+        payload = request.model_dump(by_alias=True, exclude_none=True)
+        result = await self._http.patch(_path(id), json=payload)
+        return Webhook(**result["webhook"])
 
     async def delete(self, id: str) -> dict[str, Any]:
-        """
-        Delete a webhook
-
-        Args:
-            id: Webhook ID
-
-        Returns:
-            Deletion confirmation
-
-        Example:
-            >>> await client.webhooks.delete("wh_abc123")
-        """
-        async def _delete() -> dict[str, Any]:
-            return await self._http.delete(f"/api/v1/webhooks/{id}")
-
-        return await with_retry(_delete)
+        """Delete a webhook"""
+        return await self._http.delete(_path(id))
 
     async def rotate_secret(self, id: str) -> str:
         """
-        Rotate webhook secret
-
-        Args:
-            id: Webhook ID
-
-        Returns:
-            New secret
-
-        Example:
-            >>> new_secret = await client.webhooks.rotate_secret("wh_abc123")
-            >>> print(f"Update your webhook verification to use: {new_secret}")
+        Rotate the signing secret and return the new one (shown once).
+        The previous secret stays valid for a grace period.
         """
-        async def _rotate() -> dict[str, Any]:
-            return await self._http.post(f"/api/v1/webhooks/{id}/rotate-secret")
-
-        response = await with_retry(_rotate)
-        return response["data"]["secret"]
+        response = await self._http.post(_path(id, "/rotate"))
+        return str(response["secret"])
 
     async def test_delivery(self, id: str) -> dict[str, Any]:
         """
-        Test webhook delivery
-
-        Args:
-            id: Webhook ID
-
-        Returns:
-            Delivery test result with status code
-
-        Example:
-            >>> result = await client.webhooks.test_delivery("wh_abc123")
-            >>> if result["data"]["delivered"]:
-            ...     print(f"Success! Status: {result['data']['statusCode']}")
-            >>> else:
-            ...     print("Delivery failed")
+        Send a test event: ``{success, statusCode, responseTime, deliveryId, message}``
         """
-        async def _test() -> dict[str, Any]:
-            return await self._http.post(f"/api/v1/webhooks/{id}/test")
-
-        return await with_retry(_test)
+        return await self._http.post(_path(id, "/test"))

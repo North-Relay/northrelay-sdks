@@ -2,9 +2,9 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional, TypedDict, Union
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
 
 # ===== Enums =====
@@ -71,6 +71,30 @@ class ButtonStyle(str, Enum):
     FILLED = "filled"
     OUTLINE = "outline"
     GHOST = "ghost"
+
+
+class WebhookEventType(str, Enum):
+    """Event names a webhook can subscribe to (``WEBHOOK_EVENT_TYPES`` on the server)."""
+
+    CONTACT_SUBSCRIBED = "contact.subscribed"
+    CONTACT_CONFIRMED = "contact.confirmed"
+    CONTACT_UNSUBSCRIBED = "contact.unsubscribed"
+    LIST_MEMBER_ADDED = "list.member_added"
+    LIST_MEMBER_REMOVED = "list.member_removed"
+    EMAIL_OPENED = "email.opened"
+    EMAIL_CLICKED = "email.clicked"
+    EMAIL_DELIVERED = "email.delivered"
+    EMAIL_BOUNCED = "email.bounced"
+    EMAIL_DEFERRED = "email.deferred"
+    EMAIL_DROPPED = "email.dropped"
+    EMAIL_RECEIVED = "email.received"
+    EMAIL_QUEUED = "email.queued"
+    AUTH_SUCCESS = "auth.success"
+    AUTH_FAILED = "auth.failed"
+
+
+#: Every event name accepted by ``POST /api/v1/webhooks``.
+WEBHOOK_EVENT_TYPES: tuple[str, ...] = tuple(e.value for e in WebhookEventType)
 
 
 # ===== Email Types =====
@@ -295,25 +319,30 @@ class CreateDomainRequest(BaseModel):
 
 
 class Webhook(BaseModel):
-    """Webhook configuration"""
+    """Webhook configuration. ``secret`` is only set on the create response."""
 
     id: str
     url: str
-    events: list[EventType]
-    active: bool
-    secret: str
-    created_at: datetime = Field(..., alias="createdAt")
-    updated_at: datetime = Field(..., alias="updatedAt")
+    events: list[Union[WebhookEventType, str]]
+    active: bool = True
+    description: Optional[str] = None
+    secret: Optional[str] = None
+    secret_prefix: Optional[str] = Field(None, alias="secretPrefix")
+    total_deliveries: Optional[int] = Field(None, alias="totalDeliveries")
+    stats: Optional[dict[str, Any]] = None
+    created_at: Optional[datetime] = Field(None, alias="createdAt")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt")
 
     model_config = ConfigDict(populate_by_name=True)
 
 
 class CreateWebhookRequest(BaseModel):
-    """Request to create a webhook"""
+    """Request to create a webhook. ``events`` takes ``WebhookEventType`` values."""
 
     url: str
-    events: list[EventType]
-    active: bool = True
+    events: list[Union[WebhookEventType, str]]
+    description: Optional[str] = None
+    active: bool = True  # not sent: new webhooks are always active
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -322,10 +351,49 @@ class UpdateWebhookRequest(BaseModel):
     """Request to update a webhook"""
 
     url: Optional[str] = None
-    events: Optional[list[EventType]] = None
+    events: Optional[list[Union[WebhookEventType, str]]] = None
+    description: Optional[str] = None
     active: Optional[bool] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class WebhookPayload(BaseModel):
+    """Body NorthRelay POSTs to your webhook URL.
+
+    ``details`` depends on ``event_type``:
+
+    - ``contact.subscribed``: contactId, email, source (FORM, API, IMPORT,
+      PREFERENCE_CENTER, PLATFORM_SIGNUP, DASHBOARD), listIds, topicIds,
+      requiresConfirmation, status (plus listId, formId and fields for forms).
+    - ``contact.confirmed``: contactId, email, formId, listIds, topicIds, confirmedAt.
+    - ``contact.unsubscribed``: contactEmail, contactId, scope (all, list, topic),
+      method (one_click, link, preference_center, api, dashboard,
+      platform_settings, complaint), listId, topicId, campaignId, reason and the
+      legacy ``category``.
+    - ``list.member_added`` / ``list.member_removed``: listId, contactId, email, source.
+    - ``email.opened`` / ``email.clicked``: email, contactId, campaignId,
+      trackingId, userAgent, engagementType (human engagement only; bots are
+      filtered) and, for clicks, ``url``.
+    """
+
+    event_type: Union[WebhookEventType, str] = Field(..., alias="eventType")
+    message_id: Optional[str] = Field(None, alias="messageId")
+    timestamp: Optional[datetime] = None
+    recipient: Optional[str] = None
+    sender: Optional[str] = None
+    subject: Optional[str] = None
+    status: Optional[str] = None
+    details: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _null_details(cls, data: Any) -> Any:
+        if isinstance(data, dict) and data.get("details") is None:
+            data = {**data, "details": {}}
+        return data
 
 
 # ===== Campaign Types =====
@@ -373,37 +441,405 @@ class UpdateCampaignRequest(BaseModel):
 # ===== Contact Types =====
 
 
-class Contact(BaseModel):
-    """Contact / recipient"""
+ContactStatus = Literal["PENDING", "ACTIVE", "UNSUBSCRIBED", "BOUNCED", "COMPLAINED", "CLEANED"]
+ContactSource = Literal["MANUAL", "CSV_IMPORT", "API", "FORM", "SYNC"]
+WritableContactStatus = Literal["ACTIVE", "UNSUBSCRIBED", "BOUNCED", "COMPLAINED", "CLEANED"]
 
-    id: str
-    email: EmailStr
-    name: Optional[str] = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    subscribed: bool = True
-    created_at: datetime = Field(..., alias="createdAt")
+
+class ContactTag(BaseModel):
+    """Tag row attached to a contact"""
+
+    id: Optional[str] = None
+    tag: str
 
     model_config = ConfigDict(populate_by_name=True)
 
 
+class ContactCustomField(BaseModel):
+    """Custom field row attached to a contact"""
+
+    id: Optional[str] = None
+    key: str
+    value: str
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class Contact(BaseModel):
+    """Contact as returned by ``/api/v1/contacts``"""
+
+    id: str
+    email: str
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    phone: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    source: Optional[str] = None
+    status: Optional[str] = None
+    subscribed_at: Optional[datetime] = Field(None, alias="subscribedAt")
+    unsubscribed_at: Optional[datetime] = Field(None, alias="unsubscribedAt")
+    confirmed_at: Optional[datetime] = Field(None, alias="confirmedAt")
+    engagement_score: Optional[float] = Field(None, alias="engagementScore")
+    last_engaged_at: Optional[datetime] = Field(None, alias="lastEngagedAt")
+    consent_source: Optional[str] = Field(None, alias="consentSource")
+    consent_at: Optional[datetime] = Field(None, alias="consentAt")
+    tags: list[ContactTag] = Field(default_factory=list)
+    custom_fields: list[ContactCustomField] = Field(default_factory=list, alias="customFields")
+    created_at: Optional[datetime] = Field(None, alias="createdAt")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def name(self) -> Optional[str]:
+        """First and last name joined (kept for 1.x compatibility)."""
+        joined = " ".join(p for p in (self.first_name, self.last_name) if p)
+        return joined or None
+
+    @property
+    def subscribed(self) -> bool:
+        """True when the contact is ACTIVE (kept for 1.x compatibility)."""
+        return self.status == "ACTIVE"
+
+    @property
+    def tag_names(self) -> list[str]:
+        """Tag strings without the row ids."""
+        return [t.tag for t in self.tags]
+
+
 class CreateContactRequest(BaseModel):
-    """Request to create a contact"""
+    """Body of ``POST /api/v1/contacts`` (and one item of ``POST /contacts/bulk``).
+
+    ``source`` defaults to ``API`` on the server. Tags must be lowercase
+    letters, digits, ``-`` or ``_``; phone numbers use E.164. ``name`` is
+    accepted for 1.x compatibility and split into first and last name.
+    """
 
     email: EmailStr
-    name: Optional[str] = None
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    phone: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
-    subscribed: bool = True
+    source: Optional[ContactSource] = None
+    status: Optional[WritableContactStatus] = None
+    tags: Optional[list[str]] = None
+    custom_fields: Optional[dict[str, str]] = Field(None, alias="customFields")
+    name: Optional[str] = Field(None, exclude=True)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @model_validator(mode="after")
+    def _split_name(self) -> "CreateContactRequest":
+        if self.name and self.first_name is None and self.last_name is None:
+            first, _, last = self.name.strip().partition(" ")
+            self.first_name = first or None
+            self.last_name = last.strip() or None
+        return self
+
+
+class UpdateContactRequest(BaseModel):
+    """Body of ``PATCH /api/v1/contacts/{id}`` (every field optional)"""
+
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    phone: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    source: Optional[ContactSource] = None
+    status: Optional[WritableContactStatus] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class BulkCreateContactsResult(BaseModel):
+    """Result of ``POST /api/v1/contacts/bulk``"""
+
+    created: int = 0
+    skipped: int = 0
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class BulkDeleteContactsResult(BaseModel):
+    """Result of ``DELETE /api/v1/contacts/bulk``"""
+
+    deleted: int = 0
+    requested: int = 0
+
+
+class CsvColumnMapping(BaseModel):
+    """Maps one CSV header to a contact field for ``contacts.import_csv``"""
+
+    csv_column: str = Field(..., alias="csvColumn")
+    field: Literal["email", "firstName", "lastName", "phone", "skip"]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ImportContactsResult(BaseModel):
+    """Result of ``POST /api/v1/contacts/import``"""
+
+    imported: int = 0
+    skipped: int = 0
+    added_to_list: int = Field(0, alias="addedToList")
+    errors: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(populate_by_name=True)
 
 
 class ContactList(BaseModel):
-    """Contact list"""
+    """Contact list (mailing list)"""
 
     id: str
     name: str
-    contact_count: int = Field(..., alias="contactCount")
-    created_at: datetime = Field(..., alias="createdAt")
+    description: Optional[str] = None
+    type: Optional[str] = None
+    contact_count: int = Field(0, alias="contactCount")
+    is_archived: Optional[bool] = Field(None, alias="isArchived")
+    suppression_group_id: Optional[str] = Field(None, alias="suppressionGroupId")
+    tracking_enabled: Optional[bool] = Field(None, alias="trackingEnabled")
+    created_at: Optional[datetime] = Field(None, alias="createdAt")
+    updated_at: Optional[datetime] = Field(None, alias="updatedAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ListMemberContact(BaseModel):
+    """Contact summary embedded in a list member row"""
+
+    id: str
+    email: str
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    status: Optional[str] = None
+    subscribed_at: Optional[datetime] = Field(None, alias="subscribedAt")
+    created_at: Optional[datetime] = Field(None, alias="createdAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ListMember(BaseModel):
+    """One row of ``GET /api/v1/contacts/lists/{id}/members``.
+
+    ``suppression_statuses`` says why the member would not receive mail
+    (BOUNCED, COMPLAINED, UNSUBSCRIBED, CLEANED, MANUALLY_SUPPRESSED,
+    CATEGORY_SUPPRESSED, REMOVED_FROM_LIST); an empty list means active.
+    """
+
+    id: str
+    contact_id: str = Field(..., alias="contactId")
+    contact: Optional[ListMemberContact] = None
+    added_at: Optional[datetime] = Field(None, alias="addedAt")
+    removed_at: Optional[datetime] = Field(None, alias="removedAt")
+    suppression_statuses: list[str] = Field(default_factory=list, alias="suppressionStatuses")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ListMemberCounts(BaseModel):
+    """Member counts for the list (independent of the filter)"""
+
+    total: int = 0
+    active: int = 0
+    suppressed: int = 0
+
+
+class ListMembersPage(BaseModel):
+    """One page of list members"""
+
+    data: list[ListMember] = Field(default_factory=list)
+    counts: ListMemberCounts = Field(default_factory=lambda: ListMemberCounts.model_validate({}))
+    page: int = 1
+    limit: int = 50
+    total: int = 0
+    total_pages: int = Field(0, alias="totalPages")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def has_more(self) -> bool:
+        return self.page < self.total_pages
+
+
+class BlockedAddress(BaseModel):
+    """Address that was not added because it is suppressed or unsubscribed"""
+
+    email: str
+    reason: str
+
+
+class AddListMembersResult(BaseModel):
+    """Result of ``POST /api/v1/contacts/lists/{id}/members``"""
+
+    added: int = 0
+    already_members: int = Field(0, alias="alreadyMembers")
+    not_found: list[str] = Field(default_factory=list, alias="notFound")
+    blocked: list[BlockedAddress] = Field(default_factory=list)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @property
+    def skipped(self) -> int:
+        """Back-compat name for ``already_members``."""
+        return self.already_members
+
+
+class RemoveListMembersResult(BaseModel):
+    """Result of ``DELETE /api/v1/contacts/lists/{id}/members``"""
+
+    removed: int = 0
+
+
+# ===== Subscription Types =====
+
+
+class Consent(BaseModel):
+    """Consent evidence your application collected (CASL / GDPR)."""
+
+    ip: Optional[str] = None
+    user_agent: Optional[str] = Field(None, alias="userAgent")
+    text: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+
+class SubscribeRequest(BaseModel):
+    """Body of ``POST /api/v1/subscriptions`` (the server rejects unknown keys)"""
+
+    email: str
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    phone: Optional[str] = None
+    list_ids: Optional[list[str]] = Field(None, alias="listIds", max_length=50)
+    topic_ids: Optional[list[str]] = Field(None, alias="topicIds", max_length=50)
+    tags: Optional[list[str]] = Field(None, max_length=50)
+    custom_fields: Optional[dict[str, str]] = Field(None, alias="customFields")
+    metadata: Optional[dict[str, Any]] = None
+    double_opt_in: Optional[bool] = Field(None, alias="doubleOptIn")
+    confirmation_template_id: Optional[str] = Field(None, alias="confirmationTemplateId")
+    redirect_url: Optional[str] = Field(None, alias="redirectUrl")
+    resubscribe: Optional[bool] = None
+    consent: Optional[Consent] = None
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    @model_validator(mode="after")
+    def _https_redirect(self) -> "SubscribeRequest":
+        if self.redirect_url is not None and not self.redirect_url.startswith("https://"):
+            raise ValueError("redirect_url must use https://")
+        return self
+
+
+class SubscribeResult(BaseModel):
+    """Result of ``POST /api/v1/subscriptions``"""
+
+    contact_id: str = Field(..., alias="contactId")
+    email: str
+    status: Literal["ACTIVE", "PENDING"]
+    created: bool
+    list_ids: list[str] = Field(default_factory=list, alias="listIds")
+    added_to_list_ids: list[str] = Field(default_factory=list, alias="addedToListIds")
+    topic_ids: list[str] = Field(default_factory=list, alias="topicIds")
+    requires_confirmation: bool = Field(False, alias="requiresConfirmation")
+    confirmation_sent: bool = Field(False, alias="confirmationSent")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class UnsubscribeResult(BaseModel):
+    """Result of ``POST /api/v1/subscriptions/unsubscribe``"""
+
+    email: str
+    contact_id: Optional[str] = Field(None, alias="contactId")
+    scope: Literal["all", "list", "topic"]
+    changed: bool
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ConsentEvidence(BaseModel):
+    """Consent evidence stored on a contact"""
+
+    source: Optional[str] = None
+    at: Optional[datetime] = None
+    ip: Optional[str] = None
+    user_agent: Optional[str] = Field(None, alias="userAgent")
+    text: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SubscriptionContact(BaseModel):
+    """Contact block of a subscription status"""
+
+    id: str
+    status: str
+    first_name: Optional[str] = Field(None, alias="firstName")
+    last_name: Optional[str] = Field(None, alias="lastName")
+    subscribed_at: Optional[datetime] = Field(None, alias="subscribedAt")
+    confirmed_at: Optional[datetime] = Field(None, alias="confirmedAt")
+    unsubscribed_at: Optional[datetime] = Field(None, alias="unsubscribedAt")
+    consent: ConsentEvidence = Field(default_factory=lambda: ConsentEvidence.model_validate({}))
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SuppressionInfo(BaseModel):
+    """Account-level suppression (Unsubscribe, Bounce, Complaint or Manual)"""
+
+    reason: str
+    since: Optional[datetime] = None
+
+
+class PendingConfirmation(BaseModel):
+    """Outstanding double opt-in"""
+
+    expires_at: Optional[datetime] = Field(None, alias="expiresAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ListSubscription(BaseModel):
+    """List membership in a subscription status"""
+
+    id: str
+    name: str
+    subscribed: bool
+    added_at: Optional[datetime] = Field(None, alias="addedAt")
+    removed_at: Optional[datetime] = Field(None, alias="removedAt")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class TopicSubscription(BaseModel):
+    """Topic (suppression group) in a subscription status"""
+
+    id: str
+    name: str
+    label: Optional[str] = None
+    description: Optional[str] = None
+    subscribed: bool
+
+
+class SubscriptionStatus(BaseModel):
+    """Result of ``GET`` and ``PATCH /api/v1/subscriptions/{email}``"""
+
+    email: str
+    contact: Optional[SubscriptionContact] = None
+    suppression: Optional[SuppressionInfo] = None
+    unsubscribed_from_all: bool = Field(False, alias="unsubscribedFromAll")
+    pending_confirmation: Optional[PendingConfirmation] = Field(None, alias="pendingConfirmation")
+    lists: list[ListSubscription] = Field(default_factory=list)
+    topics: list[TopicSubscription] = Field(default_factory=list)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ResendConfirmationResult(BaseModel):
+    """Result of ``POST /api/v1/subscriptions/{email}/resend-confirmation``"""
+
+    email: str
+    confirmation_sent: bool = Field(False, alias="confirmationSent")
+    expires_at: Optional[datetime] = Field(None, alias="expiresAt")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -579,7 +1015,17 @@ class PaginatedResponse(BaseModel):
         Handles both ``{ data: [...] }`` and ``{ data: { templates: [...] } }`` shapes.
         """
         raw_data = response.get("data", [])
-        meta = response.get("meta", {})
+        meta = response.get("meta") or {}
+        pagination = response.get("pagination")
+        if not meta and isinstance(pagination, dict):
+            # List routes that answer { data: [...], pagination: { page, limit, total, totalPages } }
+            page = int(pagination.get("page", 1))
+            meta = {
+                "page": page,
+                "limit": pagination.get("limit", 20),
+                "total_count": pagination.get("total", 0),
+                "has_more": page < int(pagination.get("totalPages", 0) or 0),
+            }
 
         # data can be a list directly or a dict with a single list value
         if isinstance(raw_data, dict):

@@ -4,6 +4,7 @@ from __future__ import annotations
 """Analytics, Metrics, Suppressions, and other infrastructure resources"""
 
 from typing import Any, Optional
+from urllib.parse import quote
 from northrelay.utils.http import HttpClient
 from northrelay.utils.retry import with_retry, RetryConfig
 from northrelay.types import PaginatedResponse
@@ -153,8 +154,8 @@ class SuppressionsResource:
         )
         return PaginatedResponse(**response)
 
-    async def add(self, email: str, reason: Optional[str] = None) -> dict[str, Any]:
-        """Add email to suppression list"""
+    async def add(self, email: str, reason: str = "Manual") -> dict[str, Any]:
+        """Add email to suppression list. reason: Bounce, Complaint, Unsubscribe or Manual."""
         return await with_retry(
             lambda: self._http.post(
                 "/api/v1/suppressions", json={"email": email, "reason": reason}
@@ -164,62 +165,120 @@ class SuppressionsResource:
     async def remove(self, email: str) -> dict[str, Any]:
         """Remove email from suppression list"""
         return await with_retry(
-            lambda: self._http.delete(f"/api/v1/suppressions/{email}")
+            lambda: self._http.delete("/api/v1/suppressions/" + quote(email, safe=""))
         )
 
     async def check(self, email: str) -> dict[str, Any]:
         """Check if email is suppressed"""
         return await with_retry(
-            lambda: self._http.get(f"/api/v1/suppressions/{email}")
+            lambda: self._http.get("/api/v1/suppressions/" + quote(email, safe=""))
         )
 
 
 class SuppressionGroupsResource:
-    """Suppression group management"""
+    """Topics (suppression groups).
+
+    A member of a topic is an address that OPTED OUT of that topic. Tag a
+    contact list with a topic (``contacts.create_list(..., topic_id=...)``) so
+    that opting out of the topic also leaves the list. To let a subscriber
+    rejoin a topic, use ``client.subscriptions.update_preferences``.
+    Also available as ``client.topics``.
+    """
 
     def __init__(self, http: HttpClient, retry_config: RetryConfig):
         self._http = http
         self._retry_config = retry_config
 
-    async def list(self) -> PaginatedResponse:
-        """List suppression groups"""
-        response = await with_retry(lambda: self._http.get("/api/v1/suppression-groups"))
-        return PaginatedResponse(**response)
+    @staticmethod
+    def _path(id: str, suffix: str = "") -> str:
+        return "/api/v1/suppression-groups/" + quote(id, safe="") + suffix
+
+    async def list(
+        self, *, page: int = 1, limit: int = 25, published: Optional[bool] = None
+    ) -> PaginatedResponse:
+        """List topics (``published=True``: only those shown on the unsubscribe page)"""
+        params: dict[str, Any] = {"page": page, "limit": limit}
+        if published:
+            params["published"] = "true"
+        response = await with_retry(
+            lambda: self._http.get("/api/v1/suppression-groups", params=params)
+        )
+        return PaginatedResponse.from_api_response(response)
 
     async def get(self, id: str) -> dict[str, Any]:
-        """Get a suppression group"""
-        return await with_retry(
-            lambda: self._http.get(f"/api/v1/suppression-groups/{id}")
-        )
+        """Get a topic (``data._count.members`` is the opt-out count)"""
+        return await with_retry(lambda: self._http.get(self._path(id)))
 
-    async def create(self, name: str, description: Optional[str] = None) -> dict[str, Any]:
-        """Create suppression group"""
-        return await with_retry(
-            lambda: self._http.post(
-                "/api/v1/suppression-groups",
-                json={"name": name, "description": description},
-            )
-        )
-
-    async def update(
-        self, id: str, name: Optional[str] = None, description: Optional[str] = None
+    async def create(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        *,
+        is_default: Optional[bool] = None,
     ) -> dict[str, Any]:
-        """Update suppression group"""
-        payload = {}
-        if name:
-            payload["name"] = name
+        """Create a topic"""
+        payload: dict[str, Any] = {"name": name}
         if description is not None:
             payload["description"] = description
+        if is_default is not None:
+            payload["isDefault"] = is_default
+        return await self._http.post("/api/v1/suppression-groups", json=payload)
 
-        return await with_retry(
-            lambda: self._http.patch(f"/api/v1/suppression-groups/{id}", json=payload)
-        )
+    async def update(
+        self,
+        id: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        *,
+        is_default: Optional[bool] = None,
+        public_label: Optional[str] = None,
+        public_description: Optional[str] = None,
+        is_published_on_unsub: Optional[bool] = None,
+        sort_order: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Update a topic.
+
+        ``public_label`` / ``public_description`` are what recipients see on
+        the unsubscribe and preference pages; ``is_published_on_unsub`` shows
+        the topic there.
+        """
+        payload = {
+            k: v
+            for k, v in {
+                "name": name,
+                "description": description,
+                "isDefault": is_default,
+                "publicLabel": public_label,
+                "publicDescription": public_description,
+                "isPublishedOnUnsub": is_published_on_unsub,
+                "sortOrder": sort_order,
+            }.items()
+            if v is not None
+        }
+        return await self._http.patch(self._path(id), json=payload)
 
     async def delete(self, id: str) -> dict[str, Any]:
-        """Delete suppression group"""
-        return await with_retry(
-            lambda: self._http.delete(f"/api/v1/suppression-groups/{id}")
+        """Delete a topic"""
+        return await self._http.delete(self._path(id))
+
+    # ----- Opt-outs (members) -----
+
+    async def list_members(self, id: str, *, page: int = 1, limit: int = 25) -> PaginatedResponse:
+        """List addresses that opted out of the topic (``{email, createdAt}`` items)"""
+        params = {"page": page, "limit": limit}
+        response = await with_retry(
+            lambda: self._http.get(self._path(id, "/members"), params=params)
         )
+        return PaginatedResponse.from_api_response(response)
+
+    async def add_member(self, id: str, email: str) -> dict[str, Any]:
+        """Opt an address out of the topic (does not fire contact.unsubscribed;
+        use ``subscriptions.unsubscribe(scope="topic")`` for a recipient's own opt-out)"""
+        return await self._http.post(self._path(id, "/members"), json={"email": email})
+
+    async def remove_member(self, id: str, email: str) -> dict[str, Any]:
+        """Remove an address's opt-out from the topic"""
+        return await self._http.delete(self._path(id, "/members/" + quote(email, safe="")))
 
 
 class SubusersResource:

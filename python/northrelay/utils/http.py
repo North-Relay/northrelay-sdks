@@ -44,7 +44,7 @@ class HttpClient:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "User-Agent": "northrelay-python/1.8.0",
+                "User-Agent": "northrelay-python/1.9.0",
             },
         )
         self._rate_limit_info: Optional[RateLimitInfo] = None
@@ -72,7 +72,7 @@ class HttpClient:
         """Convert HTTP error responses to exceptions"""
         status_code = response.status_code
         
-        error_data = {}
+        error_data: Any = {}
         try:
             error_data = response.json()
             nested = error_data.get("error", {})
@@ -80,46 +80,56 @@ class HttpClient:
         except Exception:
             error_message = response.text or f"HTTP {status_code} error"
 
+        # Structured error fields ({ code, fix_action, docs_url }) land in exc.details
+        info: dict[str, Any] = {}
+        nested = error_data.get("error") if isinstance(error_data, dict) else None
+        source = nested if isinstance(nested, dict) else (error_data if isinstance(error_data, dict) else {})
+        for key in ("code", "fix_action", "docs_url"):
+            if source.get(key) is not None:
+                info[key] = source[key]
+
         # 401 - Authentication error
         if status_code == 401:
-            raise AuthenticationError(error_message)
+            raise AuthenticationError(error_message, **info)
 
-        # 403 - Scope / permission error
+        # 403 - Scope / permission error (also FREE_TIER_CONTACT_LIMIT)
         if status_code == 403:
-            raise ScopeError(error_message)
+            raise ScopeError(error_message, **info)
 
         # 400 - Validation error
         if status_code == 400:
             errors = error_data.get("errors") if isinstance(error_data, dict) else None
-            raise ValidationError(error_message, errors=errors)
+            raise ValidationError(error_message, errors=errors, **info)
 
+        # 409 - Conflict (e.g. RECIPIENT_UNSUBSCRIBED, RECIPIENT_SUPPRESSED)
         if status_code == 409:
-            nested = error_data.get("error", {})
-            raise NorthRelayError(error_message, status_code=409, code=nested.get("code") if isinstance(nested, dict) else None)
+            info.setdefault("code", None)
+            raise NorthRelayError(error_message, status_code=409, **info)
 
         # 404 - Not found
         if status_code == 404:
-            raise NotFoundError(error_message)
+            raise NotFoundError(error_message, **info)
 
         # 429 - Rate limit or quota
         if status_code == 429:
             retry_after = response.headers.get("retry-after")
-            
+
             # Check if it's quota exceeded vs rate limit
             if "quota" in error_message.lower():
-                raise QuotaExceededError(error_message)
-            
+                raise QuotaExceededError(error_message, **info)
+
             raise RateLimitError(
                 error_message,
                 retry_after=int(retry_after) if retry_after else None,
+                **info,
             )
 
         # 5xx - Server errors
         if 500 <= status_code < 600:
-            raise ServerError(error_message, status_code=status_code)
+            raise ServerError(error_message, status_code=status_code, **info)
 
-        # Other errors
-        response.raise_for_status()
+        # Other errors (e.g. 413 payload too large)
+        raise NorthRelayError(error_message, status_code=status_code, **info)
 
     async def request(
         self,
@@ -148,6 +158,29 @@ class HttpClient:
     async def post(self, path: str, json: Any = None, **kwargs: Any) -> dict[str, Any]:
         """POST request"""
         response = await self.request("POST", path, json=json, **kwargs)
+        return response.json()
+
+    async def post_multipart(
+        self,
+        path: str,
+        *,
+        data: Optional[dict[str, str]] = None,
+        files: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        """POST multipart/form-data.
+
+        The client's default ``Content-Type: application/json`` header would
+        otherwise replace the multipart boundary, so the body is encoded first
+        and sent with its own content type.
+        """
+        encoded = httpx.Request("POST", "https://encode.invalid/", data=data, files=files)
+        body = encoded.read()
+        response = await self.request(
+            "POST",
+            path,
+            content=body,
+            headers={"Content-Type": encoded.headers["Content-Type"]},
+        )
         return response.json()
 
     async def patch(self, path: str, json: Any = None, **kwargs: Any) -> dict[str, Any]:

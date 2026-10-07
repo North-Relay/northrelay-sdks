@@ -1,7 +1,7 @@
 """Retry logic with exponential backoff and retry_after support"""
 
 import asyncio
-from typing import Any, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 from northrelay.exceptions import RateLimitError, ServerError, NetworkError
 
@@ -31,7 +31,7 @@ def _get_delay(
 
 
 async def with_retry(
-    func: Callable[[], T],
+    func: Callable[[], Awaitable[T]],
     max_attempts: int = 3,
     initial_delay: float = 1.0,
     max_delay: float = 10.0,

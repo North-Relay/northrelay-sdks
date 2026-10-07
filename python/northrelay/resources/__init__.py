@@ -6,6 +6,8 @@ from northrelay.resources.domains import DomainsResource
 from northrelay.resources.webhooks import WebhooksResource
 from northrelay.resources.campaigns import CampaignsResource
 from northrelay.resources.contacts import ContactsResource
+from northrelay.resources.subscriptions import SubscriptionsResource
+from northrelay.resources.forms import FormsResource
 from northrelay.resources.brand_theme import BrandThemeResource
 from northrelay.resources.api_keys import ApiKeysResource
 from northrelay.resources.events import EventsResource
@@ -30,6 +32,8 @@ __all__ = [
     "WebhooksResource",
     "CampaignsResource",
     "ContactsResource",
+    "SubscriptionsResource",
+    "FormsResource",
     "BrandThemeResource",
     "ApiKeysResource",
     "EventsResource",
