@@ -21,5 +21,7 @@ describe('NorthRelayClient', () => {
     expect(client.campaigns).toBeDefined();
     expect(client.contacts).toBeDefined();
     expect(client.brandTheme).toBeDefined();
+    expect(client.subscriptions).toBeDefined();
+    expect(client.forms).toBeDefined();
   });
 });

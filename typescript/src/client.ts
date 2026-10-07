@@ -14,6 +14,8 @@ import { ApiKeysResource } from './resources/api-keys';
 import { EventsResource } from './resources/events';
 import { CampaignsResource } from './resources/campaigns';
 import { ContactsResource } from './resources/contacts';
+import { SubscriptionsResource } from './resources/subscriptions';
+import { FormsResource } from './resources/forms';
 import { BrandThemeResource } from './resources/brand-theme';
 import { AnalyticsResource } from './resources/analytics';
 import { MetricsResource } from './resources/metrics';
@@ -45,6 +47,10 @@ export class NorthRelayClient {
   // Campaign & Contact resources
   public readonly campaigns: CampaignsResource;
   public readonly contacts: ContactsResource;
+  /** Consent-aware subscribe/unsubscribe, status and preferences for lists and topics. */
+  public readonly subscriptions: SubscriptionsResource;
+  /** Hosted signup forms. */
+  public readonly forms: FormsResource;
   
   // Customization
   public readonly brandTheme: BrandThemeResource;
@@ -105,6 +111,8 @@ export class NorthRelayClient {
     this.events = new EventsResource(this.http, this.retryConfig);
     this.campaigns = new CampaignsResource(this.http, this.retryConfig);
     this.contacts = new ContactsResource(this.http, this.retryConfig);
+    this.subscriptions = new SubscriptionsResource(this.http, this.retryConfig);
+    this.forms = new FormsResource(this.http, this.retryConfig);
     this.brandTheme = new BrandThemeResource(this.http, this.retryConfig);
     this.analytics = new AnalyticsResource(this.http, this.retryConfig);
     this.metrics = new MetricsResource(this.http, this.retryConfig);

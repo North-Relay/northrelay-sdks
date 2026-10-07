@@ -47,7 +47,7 @@ export class SuppressionsResource {
    */
   public async remove(email: string): Promise<{ success: true }> {
     return withRetry(
-      () => this.http.delete(`/api/v1/suppressions/${email}`),
+      () => this.http.delete(`/api/v1/suppressions/${encodeURIComponent(email)}`),
       this.retryConfig
     );
   }
@@ -55,9 +55,20 @@ export class SuppressionsResource {
   /**
    * Bulk add suppressions
    */
-  public async bulkAdd(emails: string[]): Promise<{ success: true; data: { added: number } }> {
+  public async bulkAdd(
+    emails: string[],
+    reason: 'Bounce' | 'Complaint' | 'Unsubscribe' | 'Manual' = 'Manual',
+  ): Promise<{ success: true; data: { action: 'add'; requested: number; added: number; updated: number } }> {
     return withRetry(
-      () => this.http.post('/api/v1/suppressions/bulk', { emails }),
+      () => this.http.post('/api/v1/suppressions/bulk', { action: 'add', reason, emails }),
+      this.retryConfig
+    );
+  }
+
+  /** Bulk remove suppressions. Removing a Complaint suppression re-enables mail to someone who reported spam. */
+  public async bulkRemove(emails: string[]): Promise<{ success: true; data: { action: 'remove'; requested: number; removed: number } }> {
+    return withRetry(
+      () => this.http.post('/api/v1/suppressions/bulk', { action: 'remove', emails }),
       this.retryConfig
     );
   }

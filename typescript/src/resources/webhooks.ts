@@ -13,53 +13,51 @@ export class WebhooksResource {
     private retryConfig: RetryConfig
   ) {}
 
-  public async list(): Promise<PaginatedResponse<Webhook>> {
+  /** Lists webhooks. The server answers `{ webhooks: [...] }`. */
+  public async list(): Promise<{ webhooks: Array<Webhook & { totalDeliveries?: number }> }> {
     return withRetry(
       () => this.http.get('/api/v1/webhooks'),
       this.retryConfig
     );
   }
 
-  public async get(id: string): Promise<{ success: true; data: Webhook }> {
+  /** One webhook plus 24-hour delivery stats: `{ webhook, stats }`. */
+  public async get(id: string): Promise<{ webhook: Webhook; stats: Record<string, number> }> {
     return withRetry(
-      () => this.http.get(`/api/v1/webhooks/${id}`),
+      () => this.http.get(`/api/v1/webhooks/${encodeURIComponent(id)}`),
       this.retryConfig
     );
   }
 
-  public async create(request: CreateWebhookRequest): Promise<{ success: true; data: Webhook }> {
+  /**
+   * Creates a webhook. The signing `secret` is returned only here; store it.
+   * Not retried: a retry after a timeout could create a duplicate.
+   */
+  public async create(request: CreateWebhookRequest): Promise<{ webhook: Webhook; secret: string; message: string }> {
+    return this.http.post('/api/v1/webhooks', request);
+  }
+
+  public async update(id: string, request: UpdateWebhookRequest): Promise<{ webhook: Webhook; message: string }> {
     return withRetry(
-      () => this.http.post('/api/v1/webhooks', request),
+      () => this.http.patch(`/api/v1/webhooks/${encodeURIComponent(id)}`, request),
       this.retryConfig
     );
   }
 
-  public async update(id: string, request: UpdateWebhookRequest): Promise<{ success: true; data: Webhook }> {
+  public async delete(id: string): Promise<{ message: string }> {
     return withRetry(
-      () => this.http.put(`/api/v1/webhooks/${id}`, request),
+      () => this.http.delete(`/api/v1/webhooks/${encodeURIComponent(id)}`),
       this.retryConfig
     );
   }
 
-  public async delete(id: string): Promise<{ success: true }> {
-    return withRetry(
-      () => this.http.delete(`/api/v1/webhooks/${id}`),
-      this.retryConfig
-    );
+  /** New secret, shown once; the previous one keeps verifying until previousSecretValidUntil. */
+  public async rotateSecret(id: string): Promise<{ id: string; secret: string; previousSecretValidUntil: string }> {
+    return this.http.post(`/api/v1/webhooks/${encodeURIComponent(id)}/rotate`);
   }
 
-  public async rotateSecret(id: string): Promise<{ success: true; data: { secret: string } }> {
-    return withRetry(
-      () => this.http.post(`/api/v1/webhooks/${id}/rotate`),
-      this.retryConfig
-    );
-  }
-
-  public async testDelivery(id: string): Promise<{ success: true; data: { delivered: boolean; statusCode: number } }> {
-    return withRetry(
-      () => this.http.post(`/api/v1/webhooks/${id}/test`),
-      this.retryConfig
-    );
+  public async testDelivery(id: string): Promise<{ success: boolean; statusCode?: number; responseTime?: number; deliveryId?: string; message?: string; errorMessage?: string }> {
+    return this.http.post(`/api/v1/webhooks/${encodeURIComponent(id)}/test`);
   }
 
   public async listDeliveries(id: string, options?: { page?: number; limit?: number }): Promise<PaginatedResponse<WebhookDelivery>> {

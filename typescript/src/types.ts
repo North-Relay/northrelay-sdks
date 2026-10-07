@@ -212,10 +212,28 @@ export interface CreateDomainRequest {
   domain: string;
 }
 
+/** Event names a webhook can subscribe to (`events` on create/update). */
+export type WebhookEventType =
+  | 'contact.subscribed'
+  | 'contact.confirmed'
+  | 'contact.unsubscribed'
+  | 'list.member_added'
+  | 'list.member_removed'
+  | 'email.opened'
+  | 'email.clicked'
+  | 'email.delivered'
+  | 'email.bounced'
+  | 'email.deferred'
+  | 'email.dropped'
+  | 'email.received'
+  | 'email.queued'
+  | 'auth.success'
+  | 'auth.failed';
+
 export interface Webhook {
   id: string;
   url: string;
-  events: EventType[];
+  events: WebhookEventType[];
   active: boolean;
   secret: string;
   lastDeliveryAt?: string;
@@ -225,18 +243,24 @@ export interface Webhook {
 }
 
 export interface CreateWebhookRequest {
+  /** Must be https:// and not a loopback address. */
   url: string;
-  events: EventType[];
+  events: WebhookEventType[];
   description?: string;
 }
 
 export interface UpdateWebhookRequest {
   url?: string;
-  events?: EventType[];
+  events?: WebhookEventType[];
   active?: boolean;
   description?: string;
 }
 
+/**
+ * Legacy webhook event shape.
+ * @deprecated Deliveries use `{ eventType, messageId, timestamp, recipient, details }`;
+ * type them with `WebhookPayload`.
+ */
 export interface WebhookEvent {
   id: string;
   type: EventType;
@@ -249,6 +273,130 @@ export interface WebhookEvent {
     [key: string]: unknown;
   };
 }
+
+/** How a subscription change was made. */
+export type SubscriptionSource =
+  | 'FORM'
+  | 'API'
+  | 'IMPORT'
+  | 'PREFERENCE_CENTER'
+  | 'PLATFORM_SIGNUP'
+  | 'DASHBOARD';
+
+export type UnsubscribeScope = 'all' | 'list' | 'topic';
+
+export type UnsubscribeMethod =
+  | 'one_click'
+  | 'link'
+  | 'preference_center'
+  | 'api'
+  | 'dashboard'
+  | 'platform_settings'
+  | 'complaint';
+
+export interface ContactSubscribedDetails {
+  contactId: string;
+  email: string;
+  source: SubscriptionSource;
+  /** Lists the contact was added to by this event. */
+  listIds?: string[];
+  /** Topics the contact opted (back) into by this event. */
+  topicIds?: string[];
+  /** Form subscriptions only (kept for older consumers). */
+  listId?: string;
+  formId?: string | null;
+  /** True when a double opt-in email was sent and the contact is PENDING. */
+  requiresConfirmation: boolean;
+  status: ContactStatus | string;
+  /** Form answers, for form subscriptions. */
+  fields?: Record<string, unknown>;
+}
+
+export interface ContactConfirmedDetails {
+  contactId: string;
+  email?: string;
+  formId: string | null;
+  listIds?: string[];
+  topicIds?: string[];
+  confirmedAt: string;
+}
+
+export interface ContactUnsubscribedDetails {
+  contactEmail: string;
+  /** Null when the address was not a contact (for example API mail). */
+  contactId?: string | null;
+  scope?: UnsubscribeScope;
+  listId?: string | null;
+  topicId?: string | null;
+  method?: UnsubscribeMethod;
+  campaignId?: string | null;
+  reason?: string | null;
+  /** Legacy alias of `topicId`. */
+  category?: string | null;
+}
+
+export interface ListMemberDetails {
+  listId: string;
+  contactId: string;
+  email: string;
+  /** `UNSUBSCRIBE` when the recipient left the list themselves. */
+  source: SubscriptionSource | 'UNSUBSCRIBE';
+}
+
+export interface EmailOpenedDetails {
+  email: string | null;
+  /** Set for campaign mail. */
+  contactId: string | null;
+  campaignId: string | null;
+  /** Set for API mail sent with tracking. */
+  trackingId: string | null;
+  userAgent: string | null;
+  /** Always `HUMAN`: machine opens and clicks are filtered out. */
+  engagementType: string;
+}
+
+export interface EmailClickedDetails extends EmailOpenedDetails {
+  /** The link that was clicked. */
+  url: string;
+}
+
+/** Envelope of every webhook delivery (JSON body, signed with `X-NorthRelay-Signature`). */
+export interface WebhookPayloadBase<T extends string = WebhookEventType, D = Record<string, unknown>> {
+  eventType: T;
+  messageId: string;
+  timestamp: string;
+  recipient?: string;
+  sender?: string;
+  subject?: string;
+  status?: string;
+  pool?: string;
+  smtpResponse?: string;
+  bounceReason?: string;
+  bounceType?: 'hard' | 'soft';
+  details?: D;
+}
+
+export type ContactSubscribedWebhook = WebhookPayloadBase<'contact.subscribed', ContactSubscribedDetails> & { details: ContactSubscribedDetails };
+export type ContactConfirmedWebhook = WebhookPayloadBase<'contact.confirmed', ContactConfirmedDetails> & { details: ContactConfirmedDetails };
+export type ContactUnsubscribedWebhook = WebhookPayloadBase<'contact.unsubscribed', ContactUnsubscribedDetails> & { details: ContactUnsubscribedDetails };
+export type ListMemberAddedWebhook = WebhookPayloadBase<'list.member_added', ListMemberDetails> & { details: ListMemberDetails };
+export type ListMemberRemovedWebhook = WebhookPayloadBase<'list.member_removed', ListMemberDetails> & { details: ListMemberDetails };
+export type EmailOpenedWebhook = WebhookPayloadBase<'email.opened', EmailOpenedDetails> & { details: EmailOpenedDetails };
+export type EmailClickedWebhook = WebhookPayloadBase<'email.clicked', EmailClickedDetails> & { details: EmailClickedDetails };
+export type EmailLifecycleWebhook = WebhookPayloadBase<
+  'email.delivered' | 'email.bounced' | 'email.deferred' | 'email.dropped' | 'email.received' | 'email.queued' | 'auth.success' | 'auth.failed'
+>;
+
+/** Discriminated union of webhook deliveries; switch on `eventType`. */
+export type WebhookPayload =
+  | ContactSubscribedWebhook
+  | ContactConfirmedWebhook
+  | ContactUnsubscribedWebhook
+  | ListMemberAddedWebhook
+  | ListMemberRemovedWebhook
+  | EmailOpenedWebhook
+  | EmailClickedWebhook
+  | EmailLifecycleWebhook;
 
 export interface WebhookDelivery {
   id: string;
@@ -446,13 +594,46 @@ export interface CampaignSendStatus {
 }
 
 // Contact Types
+export type ContactStatus = 'PENDING' | 'ACTIVE' | 'UNSUBSCRIBED' | 'BOUNCED' | 'COMPLAINED' | 'CLEANED';
+export type ContactSource = 'MANUAL' | 'CSV_IMPORT' | 'API' | 'FORM' | 'SYNC';
+
+export interface ContactTag {
+  id: string;
+  contactId: string;
+  tag: string;
+}
+
+export interface ContactCustomField {
+  id: string;
+  contactId: string;
+  key: string;
+  value: string;
+}
+
 export interface Contact {
   id: string;
+  userId?: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
-  tags?: string[];
-  metadata?: Record<string, any>;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+  status?: ContactStatus;
+  source?: ContactSource;
+  /** Tag rows as returned by the API (`tags[].tag` is the tag name). */
+  tags?: ContactTag[];
+  customFields?: ContactCustomField[];
+  metadata?: Record<string, any> | null;
+  subscribedAt?: string;
+  unsubscribedAt?: string | null;
+  confirmedAt?: string | null;
+  /** Consent evidence: "form", "api", "import", "platform_signup", "manual". */
+  consentSource?: string | null;
+  consentAt?: string | null;
+  consentIp?: string | null;
+  consentUserAgent?: string | null;
+  consentText?: string | null;
+  engagementScore?: number | null;
+  lastEngagedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -461,22 +642,66 @@ export interface CreateContactRequest {
   email: string;
   firstName?: string;
   lastName?: string;
+  /** E.164 format, e.g. +12025551234 */
+  phone?: string;
+  /** Defaults to `API`. */
+  source?: ContactSource;
+  /** Defaults to `ACTIVE`. */
+  status?: ContactStatus;
+  /** Lowercase letters, digits, `-` and `_`; at most 50. */
   tags?: string[];
+  customFields?: Record<string, string>;
+  /** Up to 4 KB of JSON. */
   metadata?: Record<string, any>;
 }
 
+/**
+ * Fields accepted by `PATCH /api/v1/contacts/{id}`. Tags are not updated
+ * here: use `contacts.addTags()` / `contacts.removeTag()`.
+ */
 export interface UpdateContactRequest {
+  email?: string;
   firstName?: string;
   lastName?: string;
-  tags?: string[];
+  phone?: string;
   metadata?: Record<string, any>;
+  source?: ContactSource;
+  status?: ContactStatus;
 }
+
+export interface ListContactsOptions {
+  page?: number;
+  /** 1-1000, default 100. */
+  limit?: number;
+  status?: ContactStatus;
+  /** Filter by one tag. */
+  tag?: string;
+  /** Matches email, first name or last name. */
+  search?: string;
+  source?: ContactSource;
+  sortBy?: 'createdAt' | 'email' | 'subscribedAt';
+  sortOrder?: 'asc' | 'desc';
+  /**
+   * @deprecated The API filters by a single tag. Use `tag`; when this is set
+   * the first comma-separated value is sent as `tag`.
+   */
+  tags?: string;
+}
+
+export type ListType = 'STATIC' | 'DYNAMIC';
 
 export interface ContactList {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
+  type?: ListType;
   contactCount: number;
+  isArchived?: boolean;
+  segmentRules?: Record<string, unknown> | null;
+  /** Topic (suppression group) this list belongs to; opting out of the topic also leaves the list. */
+  suppressionGroupId?: string | null;
+  trackingEnabled?: boolean;
+  lastSyncedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -484,23 +709,171 @@ export interface ContactList {
 export interface CreateContactListRequest {
   name: string;
   description?: string;
+  /** Defaults to `STATIC`. */
+  type?: ListType;
+  segmentRules?: Record<string, unknown>;
+  /** Tag the list with a topic (suppression group id). */
+  suppressionGroupId?: string | null;
+  trackingEnabled?: boolean;
 }
 
 export interface UpdateContactListRequest {
   name?: string;
-  description?: string;
+  description?: string | null;
+  segmentRules?: Record<string, unknown> | null;
+  isArchived?: boolean;
+  suppressionGroupId?: string | null;
+  trackingEnabled?: boolean;
 }
 
+export interface ListContactListsOptions {
+  page?: number;
+  /** 1-100, default 20. */
+  limit?: number;
+  type?: ListType | 'ALL';
+  isArchived?: boolean;
+  search?: string;
+}
+
+/** Envelope of the contact-list routes (`{ data, pagination }`). */
+export interface ContactListPage<T> {
+  data: T[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+/** Result of `POST /api/v1/contacts/bulk`. */
 export interface BulkContactResult {
   created: number;
-  updated: number;
-  failed: number;
+  /** Existing contacts left untouched (when `skipDuplicates` is true). */
+  skipped: number;
+  errors: Array<{ email: string; error: string }>;
 }
 
+/** Result of `DELETE /api/v1/contacts/bulk`. */
+export interface BulkDeleteContactsResult {
+  deleted: number;
+  requested: number;
+}
+
+/** @deprecated The import API is synchronous; see `ContactImportResult`. */
 export interface ContactImportJob {
   jobId: string;
   status: string;
 }
+
+/** Contact field a CSV column maps to. */
+export type CsvImportField = 'email' | 'firstName' | 'lastName' | 'phone' | 'skip';
+
+export interface CsvColumnMapping {
+  /** Header of the CSV column, exactly as it appears in the first row. */
+  csvColumn: string;
+  field: CsvImportField;
+}
+
+export interface ImportCsvOptions {
+  /** Column mappings; one must map to `email`. At most 100. */
+  mappings: CsvColumnMapping[];
+  /** Add every imported (and already known) contact to this list. */
+  listId?: string;
+  /** Tags applied to newly created contacts (at most 20). */
+  tags?: string[] | string;
+  /** File name sent with the upload; must end in `.csv`. Default `contacts.csv`. */
+  filename?: string;
+}
+
+/** Result of `POST /api/v1/contacts/import`. */
+export interface ContactImportResult {
+  imported: number;
+  /** Rows whose email already existed. */
+  skipped: number;
+  /** Contacts (new or existing) added to `listId`. */
+  addedToList: number;
+  errors: string[];
+}
+
+export type ListMemberSuppressionFlag =
+  | 'BOUNCED'
+  | 'COMPLAINED'
+  | 'UNSUBSCRIBED'
+  | 'CLEANED'
+  | 'MANUALLY_SUPPRESSED'
+  | 'CATEGORY_SUPPRESSED'
+  | 'REMOVED_FROM_LIST';
+
+export interface ContactListMember {
+  id: string;
+  contactId: string;
+  contact: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    status: ContactStatus;
+    subscribedAt: string;
+    createdAt: string;
+  };
+  addedAt: string;
+  /** Set when the contact unsubscribed from this list (history kept). */
+  removedAt: string | null;
+  /** Empty when the member is mailable. */
+  suppressionStatuses: ListMemberSuppressionFlag[];
+}
+
+export interface ListMembersOptions {
+  page?: number;
+  /** 1-100, default 50. */
+  limit?: number;
+  filter?: 'all' | 'active' | 'suppressed';
+}
+
+export interface ListMembersResponse {
+  data: ContactListMember[];
+  counts: { total: number; active: number; suppressed: number };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface AddListMembersInput {
+  contactIds?: string[];
+  emails?: string[];
+  /** Create ACTIVE contacts for unknown emails instead of reporting them in `notFound`. */
+  createMissing?: boolean;
+}
+
+export interface RemoveListMembersInput {
+  contactIds?: string[];
+  emails?: string[];
+}
+
+export interface AddListMembersResult {
+  added: number;
+  alreadyMembers: number;
+  /** Contact ids or emails that did not match a contact (and were not created). */
+  notFound: string[];
+  /** Suppressed, unsubscribed or blocked addresses, with the subscription error code. */
+  blocked: Array<{ email: string; reason: SubscriptionErrorCode | string }>;
+}
+
+export interface AddListMembersResponse {
+  success: true;
+  data: AddListMembersResult;
+  /** @deprecated Same as `data.added`. */
+  added: number;
+  /** @deprecated Same as `data.alreadyMembers`. */
+  skipped: number;
+  message: string;
+}
+
+/** Error codes returned by the subscriptions API and list-member changes. */
+export type SubscriptionErrorCode =
+  | 'LIST_NOT_FOUND'
+  | 'TOPIC_NOT_FOUND'
+  | 'CONTACT_NOT_FOUND'
+  | 'CONTACT_BLOCKED'
+  | 'RECIPIENT_SUPPRESSED'
+  | 'RECIPIENT_UNSUBSCRIBED'
+  | 'NO_PENDING_CONFIRMATION'
+  | 'FREE_TIER_CONTACT_LIMIT'
+  | 'VALIDATION_ERROR';
 
 // Brand Theme Types
 export interface SocialLink {
@@ -668,11 +1041,23 @@ export interface AddSuppressionRequest {
   reason?: string;
 }
 
+/**
+ * A suppression group, also called a topic. A member of the group is an
+ * address that opted OUT of the topic.
+ */
 export interface SuppressionGroup {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   isDefault: boolean;
+  /** Set for NorthRelay-managed topics; null for yours. */
+  systemKey?: string | null;
+  /** Name shown to recipients on the unsubscribe / preference page. */
+  publicLabel?: string | null;
+  publicDescription?: string | null;
+  isPublishedOnUnsub?: boolean;
+  sortOrder?: number;
+  _count?: { members: number };
   createdAt: string;
   updatedAt: string;
 }
@@ -687,6 +1072,16 @@ export interface UpdateSuppressionGroupRequest {
   name?: string;
   description?: string;
   isDefault?: boolean;
+  publicLabel?: string | null;
+  publicDescription?: string | null;
+  isPublishedOnUnsub?: boolean;
+  sortOrder?: number;
+}
+
+/** An opt-out row in a topic. */
+export interface SuppressionGroupMember {
+  email: string;
+  createdAt: string;
 }
 
 // Subuser Types

@@ -39,7 +39,7 @@ export class HttpClient {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': `NorthRelay-SDK/1.8.0`,
+        'User-Agent': `NorthRelay-SDK/1.9.0`,
       },
     });
 
@@ -113,7 +113,13 @@ export class HttpClient {
     }
 
     const { status, data } = error.response;
-    const errorData = data?.error;
+    // Most routes return { error: { code, message, ... } }; a few older ones
+    // (contact lists, CSV import) return { error: "message", fix_action? }.
+    const body = data as unknown as { error?: unknown; fix_action?: unknown } | undefined;
+    const rawError = body?.error;
+    const errorData = rawError && typeof rawError === 'object' ? (rawError as ErrorResponse['error']) : undefined;
+    const plainMessage = typeof rawError === 'string' ? rawError : undefined;
+    const plainFix = typeof body?.fix_action === 'string' ? body.fix_action : undefined;
 
     // API error with structured response
     if (errorData) {
@@ -138,9 +144,10 @@ export class HttpClient {
         case 'QUOTA_EXCEEDED':
           return new QuotaExceededError(errorData.message);
 
-        case 'RATE_LIMIT_EXCEEDED':
+        case 'RATE_LIMIT_EXCEEDED': {
           const retryAfter = parseInt(error.response.headers['retry-after'] || '60', 10);
           return new RateLimitError(errorData.message, retryAfter);
+        }
 
         case 'NOT_FOUND':
         case 'TEMPLATE_NOT_FOUND':
@@ -168,12 +175,16 @@ export class HttpClient {
     // Generic HTTP error
     switch (status) {
       case 401:
-        return new AuthenticationError('Authentication failed');
-      case 404:
-        return new NotFoundError('Resource');
-      case 429:
+        return new AuthenticationError(plainMessage ?? 'Authentication failed');
+      case 404: {
+        const notFound = new NotFoundError('Resource');
+        if (plainMessage) notFound.message = plainMessage;
+        return notFound;
+      }
+      case 429: {
         const retryAfter = parseInt(error.response.headers['retry-after'] || '60', 10);
         return new RateLimitError('Rate limit exceeded', retryAfter);
+      }
       case 500:
       case 502:
       case 503:
@@ -181,9 +192,10 @@ export class HttpClient {
         return new ServerError('Server error occurred');
       default:
         return new NorthRelayError(
-          error.message || 'An error occurred',
+          plainMessage || error.message || 'An error occurred',
           'UNKNOWN_ERROR',
-          status
+          status,
+          plainFix
         );
     }
   }

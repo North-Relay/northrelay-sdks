@@ -3,7 +3,30 @@
  */
 
 import * as crypto from 'crypto';
-import type { WebhookEvent } from './types';
+import type { WebhookEvent, WebhookPayload } from './types';
+
+export type {
+  WebhookEventType,
+  WebhookPayload,
+  WebhookPayloadBase,
+  ContactSubscribedWebhook,
+  ContactConfirmedWebhook,
+  ContactUnsubscribedWebhook,
+  ListMemberAddedWebhook,
+  ListMemberRemovedWebhook,
+  EmailOpenedWebhook,
+  EmailClickedWebhook,
+  EmailLifecycleWebhook,
+  ContactSubscribedDetails,
+  ContactConfirmedDetails,
+  ContactUnsubscribedDetails,
+  ListMemberDetails,
+  EmailOpenedDetails,
+  EmailClickedDetails,
+  SubscriptionSource,
+  UnsubscribeScope,
+  UnsubscribeMethod,
+} from './types';
 
 /**
  * Verify webhook signature using HMAC-SHA256
@@ -40,10 +63,9 @@ export function verifyWebhookSignature(
   hmac.update(payload);
   const expectedSignature = hmac.digest('hex');
   
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  const given = Buffer.from(typeof signature === 'string' ? signature : '');
+  const expected = Buffer.from(expectedSignature);
+  return given.length === expected.length && crypto.timingSafeEqual(given, expected);
 }
 
 /**
@@ -103,6 +125,49 @@ export function parseWebhookEvent(
   } catch (error) {
     throw new Error('Invalid webhook payload: ' + (error as Error).message);
   }
+}
+
+/**
+ * Verify and parse a webhook delivery into the typed `WebhookPayload` union.
+ * Switch on `eventType` to narrow `details`.
+ *
+ * @example
+ * ```typescript
+ * import { parseWebhookPayload } from '@northrelay/sdk/webhooks';
+ *
+ * const event = parseWebhookPayload(rawBody, req.headers['x-northrelay-signature'], secret);
+ * switch (event.eventType) {
+ *   case 'contact.unsubscribed':
+ *     // event.details.scope is 'all' | 'list' | 'topic'
+ *     markOptedOut(event.details.contactEmail, event.details.scope, event.details.listId ?? event.details.topicId);
+ *     break;
+ *   case 'list.member_added':
+ *     syncMember(event.details.listId, event.details.email);
+ *     break;
+ *   case 'email.clicked':
+ *     recordClick(event.details.email, event.details.url);
+ *     break;
+ * }
+ * ```
+ */
+export function parseWebhookPayload(
+  payload: string,
+  signature: string,
+  secret: string
+): WebhookPayload {
+  if (!verifyWebhookSignature(payload, signature, secret)) {
+    throw new Error('Invalid webhook signature');
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch (error) {
+    throw new Error('Invalid webhook payload: ' + (error as Error).message);
+  }
+  if (!parsed || typeof parsed !== 'object' || typeof (parsed as { eventType?: unknown }).eventType !== 'string') {
+    throw new Error('Invalid webhook payload: missing eventType');
+  }
+  return parsed as WebhookPayload;
 }
 
 /**

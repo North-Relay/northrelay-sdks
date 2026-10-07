@@ -52,6 +52,26 @@ export type {
   CreateWebhookRequest,
   UpdateWebhookRequest,
   WebhookEvent,
+  WebhookEventType,
+  WebhookPayload,
+  WebhookPayloadBase,
+  ContactSubscribedWebhook,
+  ContactConfirmedWebhook,
+  ContactUnsubscribedWebhook,
+  ListMemberAddedWebhook,
+  ListMemberRemovedWebhook,
+  EmailOpenedWebhook,
+  EmailClickedWebhook,
+  EmailLifecycleWebhook,
+  ContactSubscribedDetails,
+  ContactConfirmedDetails,
+  ContactUnsubscribedDetails,
+  ListMemberDetails,
+  EmailOpenedDetails,
+  EmailClickedDetails,
+  SubscriptionSource,
+  UnsubscribeScope,
+  UnsubscribeMethod,
   WebhookDelivery,
   WebhookFailure,
   WebhookHealth,
@@ -73,13 +93,35 @@ export type {
   
   // Contact types
   Contact,
+  ContactStatus,
+  ContactSource,
+  ContactTag,
+  ContactCustomField,
   CreateContactRequest,
   UpdateContactRequest,
+  ListContactsOptions,
   ContactList,
+  ListType,
   CreateContactListRequest,
   UpdateContactListRequest,
+  ListContactListsOptions,
+  ContactListPage,
   BulkContactResult,
+  BulkDeleteContactsResult,
   ContactImportJob,
+  CsvImportField,
+  CsvColumnMapping,
+  ImportCsvOptions,
+  ContactImportResult,
+  ContactListMember,
+  ListMemberSuppressionFlag,
+  ListMembersOptions,
+  ListMembersResponse,
+  AddListMembersInput,
+  AddListMembersResult,
+  AddListMembersResponse,
+  RemoveListMembersInput,
+  SubscriptionErrorCode,
   
   // Brand Theme types
   SocialLink,
@@ -103,6 +145,7 @@ export type {
   Suppression,
   AddSuppressionRequest,
   SuppressionGroup,
+  SuppressionGroupMember,
   CreateSuppressionGroupRequest,
   UpdateSuppressionGroupRequest,
   
@@ -148,8 +191,12 @@ export type {
 export { extractItems } from './types';
 
 // Re-export webhook utilities
-export { verifyWebhookSignature, parseWebhookEvent, constructWebhookPayload } from './webhooks';
+export { verifyWebhookSignature, parseWebhookEvent, parseWebhookPayload, constructWebhookPayload } from './webhooks';
 
 export * from './resources/designs';
 
 export * from './resources/credentials';
+
+export * from './resources/subscriptions';
+
+export * from './resources/forms';

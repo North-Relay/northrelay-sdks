@@ -21,7 +21,7 @@ export class NorthRelayError extends Error {
     this.statusCode = statusCode;
     this.fixAction = fixAction;
     this.docsUrl = docsUrl;
-    Object.setPrototypeOf(this, NorthRelayError.prototype);
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 

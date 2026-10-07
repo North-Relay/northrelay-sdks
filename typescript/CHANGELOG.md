@@ -1,3 +1,52 @@
+## [1.9.0] - 2026-10-06
+
+### Added
+- `client.subscriptions`: `subscribe`, `unsubscribe` (scope `all` / `list` / `topic`), `get(email)` status,
+  `updatePreferences(email, ...)` and `resendConfirmation(email)`, with typed inputs, results and
+  `SubscriptionErrorCode`; `isSubscriptionError(error, code?)` helper. Emails are URL-encoded in paths.
+  `subscribe` and `resendConfirmation` are never retried automatically (a retry could send a second email).
+- `client.forms`: list, get, create, update, archive, `setFields` and `submit` for hosted signup forms.
+- Contacts: `get`, `update`, `addTags`, `bulkCreate(contacts, { skipDuplicates })`; list members by
+  `emails` and/or `contactIds` with `createMissing` (`addListMembers` / `removeListMembers`), and
+  `getListMembers(id, { page, limit, filter })` with per-member suppression flags and counts.
+- Topics: `suppressionGroups.listMembers` / `addMember` / `removeMember`, `bulkRemoveSuppressions`,
+  `list({ published })` and the unsubscribe-page fields (`publicLabel`, `publicDescription`,
+  `isPublishedOnUnsub`, `sortOrder`). Lists accept `suppressionGroupId` and `trackingEnabled`.
+- Webhooks: `WebhookEventType` (including `list.member_added`, `list.member_removed`, `email.opened`,
+  `email.clicked`), the `WebhookPayload` union with typed `details` for `contact.subscribed`,
+  `contact.confirmed`, `contact.unsubscribed` (scope, method, listId, topicId, campaignId) and the new
+  events, and `parseWebhookPayload()`.
+- CSV import: `importCsv(file, { mappings: [{ csvColumn, field }], listId, tags })`, accepting a
+  `Blob`/`File` or a string; returns `{ imported, skipped, addedToList, errors }`.
+
+### Fixed
+
+- `webhooks` methods now return what the server sends: `list` → `{ webhooks }`, `get` → `{ webhook, stats }`, `create` → `{ webhook, secret, message }`, `update` (now PATCH, was PUT) → `{ webhook, message }`, `delete` → `{ message }`, `rotateSecret` → `{ id, secret, previousSecretValidUntil }`. `create`, `rotateSecret` and `testDelivery` are no longer retried; `testDelivery` returns `{ success, statusCode, responseTime, deliveryId, message, errorMessage }`.
+- `suppressions.bulkAdd(emails, reason = "Manual")` sends the required `action: "add"`; new `suppressions.bulkRemove(emails)`; `suppressions.remove` URL-encodes the email.
+- `contacts.bulkDelete` sends `{ contactIds }` (the API rejected `{ ids }`).
+- `contacts.removeTags` used a route that does not exist; it now removes tags one by one through
+  `DELETE /contacts/{id}/tags/{tag}` (all current tags when none are given). Tag and id path segments are encoded.
+- `contacts.list` sends the parameters the API reads (`status`, `tag`, `search`, `source`, `sortBy`,
+  `sortOrder`). `listId` was silently ignored and now throws, pointing to `getListMembers`; the
+  deprecated `tags` option sends its first value as `tag`.
+- `contacts.importCsv` now sends real multipart form data with the required `mappings`; it previously
+  posted JSON without mappings and always failed.
+- `suppressionGroups.bulkAddSuppressions` sends the required `action: 'add'`; emails in paths are encoded.
+- Error subclasses now pass `instanceof` (`NotFoundError`, `RateLimitError`, `ValidationError`, ...);
+  the prototype was pinned to `NorthRelayError`.
+- Error bodies of the form `{ "error": "message" }` (contact lists, CSV import) keep their message.
+- `verifyWebhookSignature` returns `false` instead of throwing when the signature length differs.
+- Types now match the API: `Contact.tags` is `ContactTag[]`, `BulkContactResult` is
+  `{ created, skipped, errors }`, webhook `events` use `WebhookEventType` (the `EventType` values were
+  never accepted), contact-list routes return `{ data }` / `{ data, pagination }`.
+  `UpdateContactRequest` no longer lists `tags` (the API ignored them; use `addTags` / `removeTag`).
+
+### Changed
+- `contacts.create`, `bulkCreate`, `importCsv`, `createList`, `suppressionGroups.create` and
+  `forms.create` are no longer retried automatically, so a timeout cannot create duplicates.
+- Drop the unused `zod` runtime dependency; the SDK never imported it.
+- Development tooling: ESLint 9 flat config with typescript-eslint 8.
+
 ## [1.8.0] - 2026-09-25
 
 - Filter and paginate hosted designs by brand, category, lifecycle and search.

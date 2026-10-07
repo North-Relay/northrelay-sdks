@@ -38,14 +38,16 @@ console.log(result.data.messageId);
 | `client.emails` | Send emails, track events, manage batches |
 | `client.templates` | Create/update email templates with Handlebars |
 | `client.campaigns` | Campaign lifecycle (draft, submit, send) |
-| `client.contacts` | Contact management and lists |
+| `client.contacts` | Contacts, tags, lists, list members, CSV import |
+| `client.subscriptions` | Consent-aware subscribe/unsubscribe, status and preferences |
+| `client.forms` | Hosted signup forms |
 | `client.domains` | Domain verification and DNS records |
 | `client.webhooks` | Webhook endpoints, deliveries, failures, health |
 | `client.apiKeys` | API key management |
 | `client.analytics` | Query analytics, heatmaps, geographic data |
 | `client.metrics` | Delivery metrics and summaries |
 | `client.suppressions` | Global suppression list |
-| `client.suppressionGroups` | Category-based suppression groups |
+| `client.suppressionGroups` | Topics (suppression groups) and their opt-outs |
 | `client.subusers` | Subuser management and permissions |
 | `client.identity` | Sender identities, profile, subscription |
 | `client.ipPools` | IP pool management |
@@ -67,6 +69,65 @@ const isValid = verifyWebhookSignature(
   'whsec_your_webhook_secret'                    // Your webhook secret
 );
 ```
+
+## Mailing lists and subscriptions
+
+A **list** is a contact list; a **topic** is a suppression group whose members have opted *out* of it.
+Use `client.subscriptions` whenever a person gives or withdraws consent, so NorthRelay records the
+evidence and fires `contact.subscribed` / `contact.unsubscribed` webhooks.
+
+```typescript
+import { isSubscriptionError } from '@northrelay/sdk';
+
+// Subscribe with double opt-in; the contact stays PENDING until they click the link.
+try {
+  await client.subscriptions.subscribe({
+    email: 'ada@example.com',
+    listIds: ['list_newsletter'],
+    topicIds: ['topic_product_news'],
+    doubleOptIn: true,
+    redirectUrl: 'https://example.com/thanks',
+    consent: { ip: req.ip, text: 'Send me the monthly newsletter' },
+  });
+} catch (error) {
+  // Unsubscribed people need fresh consent and `resubscribe: true`;
+  // bounced or complained addresses (RECIPIENT_SUPPRESSED) cannot be re-added.
+  if (isSubscriptionError(error, 'RECIPIENT_UNSUBSCRIBED')) { /* ask again */ }
+}
+
+// Render your own preference page
+const { data: status } = await client.subscriptions.get('ada@example.com');
+await client.subscriptions.updatePreferences('ada@example.com', {
+  topics: { topic_product_news: false },
+  lists: { list_weekly: true },
+});
+await client.subscriptions.unsubscribe({ email: 'ada@example.com', scope: 'all' });
+
+// Owner-side list management (not a consent record)
+await client.contacts.addListMembers('list_newsletter', { emails: ['bob@example.com'], createMissing: true });
+const members = await client.contacts.getListMembers('list_newsletter', { filter: 'active', limit: 100 });
+
+// CSV import into a list
+await client.contacts.importCsv(csvText, {
+  mappings: [{ csvColumn: 'Email', field: 'email' }, { csvColumn: 'First name', field: 'firstName' }],
+  listId: 'list_newsletter',
+  tags: ['imported'],
+});
+```
+
+Handle the subscription webhooks with the typed parser:
+
+```typescript
+import { parseWebhookPayload } from '@northrelay/sdk/webhooks';
+
+const event = parseWebhookPayload(rawBody, req.headers['x-northrelay-signature'], secret);
+if (event.eventType === 'contact.unsubscribed') {
+  // event.details: { contactEmail, scope: 'all' | 'list' | 'topic', listId, topicId, method, campaignId, ... }
+}
+```
+
+Other events: `contact.confirmed`, `list.member_added`, `list.member_removed`, `email.opened` and
+`email.clicked` (human engagement only; `email.clicked` carries the `url`).
 
 ## Configuration
 
