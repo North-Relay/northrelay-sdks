@@ -39,7 +39,7 @@ export class HttpClient {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': `NorthRelay-SDK/1.10.0`,
+        'User-Agent': `NorthRelay-SDK/1.11.0`,
       },
     });
 

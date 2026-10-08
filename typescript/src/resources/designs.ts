@@ -27,7 +27,9 @@ export interface TrackingDomainState { trackingDomain: string | null; verified: 
 export interface DesignDelivery { id: string; releaseId: string | null; messageId: string | null; state: string; createdAt: string; source?: 'design' | 'api'; recipient?: string | null; events: Array<{ eventType: string; timestamp: string }>; }
 export interface EmailDesign { retiredAt?: string | null; replacementId?: string | null; replacementKind?: "DESIGN" | "TEMPLATE" | null; brandThemeId?: string | null; source?: (CatalogSource & { digest: string }) | null; id: string; applicationKey: string; key: string; locale: string; draft: EmailDesignDraft; revision: number; publishedVersion: number | null; }
 export interface EmailDesignRelease { id: string; designId: string; version: number; snapshot: EmailDesignDraft; renderer: string; digest: string; revision?: number; }
-export interface DesignManifest { schemaVersion: 1; applicationKey: string; dryRun?: boolean; entries: Array<{ key: string; locale?: string; draft: EmailDesignDraft; expectedRevision?: number }>; }
+export interface DesignManifestEntry { key: string; locale?: string; draft: EmailDesignDraft; expectedRevision?: number; /** Export only. */ digest?: string; publishedVersion?: number | null; }
+export interface DesignManifest { schemaVersion: 1; applicationKey: string; dryRun?: boolean; /** Publish every entry whose live release differs from its draft (after a real apply). */ publish?: boolean; /** Export only: changes whenever any entry's draft changes. */ version?: string; entries: DesignManifestEntry[]; }
+export interface DesignManifestResult { dryRun: boolean; changes: Array<{ key: string; locale: string; action: 'create' | 'update' | 'unchanged'; expectedRevision: number | null; beforeHash: string | null; afterHash: string }>; published?: Array<{ key: string; locale: string; version: number; action: 'published' | 'current' }>; }
 export interface DesignCapabilities {
   contractVersion: string; accountId: string; scopes: string[]; applications: string[] | null; senders: string[] | null;
   permissions: { read: boolean; edit: boolean; publish: boolean; send: boolean };
@@ -84,7 +86,8 @@ export class DesignsResource {
   /** Campaigns using the template and send counts, before retiring or deleting it. */
   usage(id: string): Promise<Result<DesignUsage>> { return this.http.get(`${path(id)}/usage`); }
   exportManifest(applicationKey: string): Promise<Result<DesignManifest>> { return this.http.get(`/api/v1/designs/manifest?applicationKey=${encodeURIComponent(applicationKey)}`); }
-  applyManifest(manifest: DesignManifest): Promise<Result<{ dryRun: boolean; changes: Array<{ key: string; action: string }> }>> { return this.http.post('/api/v1/designs/manifest', manifest); }
+  /** Plan (dryRun, the default) or apply drafts atomically; with `publish: true` each entry is then published unless its live release is already current. */
+  applyManifest(manifest: DesignManifest): Promise<Result<DesignManifestResult>> { return this.http.post('/api/v1/designs/manifest', manifest); }
   /** @deprecated Use `uploadAsset({ imageBase64, applicationKey })`, which also accepts JPEG and WebP. */
   uploadLogo(applicationKey: string, pngBase64: string): Promise<Result<{ id: string; url: string; public: true; immutable: true }>> { return this.http.post('/api/v1/designs/assets', { applicationKey, pngBase64 }); }
   /** Upload a logo or image (PNG, JPEG or WebP, up to 700 KiB). NorthRelay resizes it for email (max 1200x400) and serves it immutably. */

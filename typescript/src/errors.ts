@@ -27,7 +27,7 @@ export class NorthRelayError extends Error {
 
 export class AuthenticationError extends NorthRelayError {
   constructor(message: string, fixAction?: string) {
-    super(message, 'AUTHENTICATION_FAILED', 401, fixAction, 'https://docs.northrelay.ca/api/authentication');
+    super(message, 'AUTHENTICATION_FAILED', 401, fixAction, 'https://docs.northrelay.ca/docs/api-reference/authentication');
     this.name = 'AuthenticationError';
   }
 }
@@ -36,7 +36,7 @@ export class ValidationError extends NorthRelayError {
   public readonly validationErrors?: Array<{ field: string; message: string }>;
 
   constructor(message: string, validationErrors?: Array<{ field: string; message: string }>) {
-    super(message, 'VALIDATION_ERROR', 400, undefined, 'https://docs.northrelay.ca/api/validation');
+    super(message, 'VALIDATION_ERROR', 400, undefined, 'https://docs.northrelay.ca/docs/api-reference/introduction#error-handling');
     this.name = 'ValidationError';
     this.validationErrors = validationErrors;
   }
@@ -50,7 +50,7 @@ export class QuotaExceededError extends NorthRelayError {
   };
 
   constructor(message: string, quota?: { used: number; limit: number; remaining: number }) {
-    super(message, 'QUOTA_EXCEEDED', 429, 'Upgrade your plan or wait for monthly reset', 'https://docs.northrelay.ca/quotas');
+    super(message, 'QUOTA_EXCEEDED', 429, 'Upgrade your plan or wait for monthly reset', 'https://docs.northrelay.ca/docs/billing/plans#what-happens-when-i-reach-my-quota');
     this.name = 'QuotaExceededError';
     this.quota = quota;
   }
@@ -60,7 +60,7 @@ export class RateLimitError extends NorthRelayError {
   public readonly retryAfter?: number;
 
   constructor(message: string, retryAfter?: number) {
-    super(message, 'RATE_LIMIT_EXCEEDED', 429, `Retry after ${retryAfter} seconds`, 'https://docs.northrelay.ca/rate-limits');
+    super(message, 'RATE_LIMIT_EXCEEDED', 429, `Retry after ${retryAfter} seconds`, 'https://docs.northrelay.ca/docs/api-reference/introduction#rate-limits');
     this.name = 'RateLimitError';
     this.retryAfter = retryAfter;
   }
@@ -70,7 +70,7 @@ export class ScopeError extends NorthRelayError {
   public readonly requiredScopes?: string[];
 
   constructor(message: string, requiredScopes?: string[]) {
-    super(message, 'SCOPE_INSUFFICIENT', 403, 'Create a new API key with the required scopes or use a full_access key', 'https://docs.northrelay.ca/api/scopes');
+    super(message, 'SCOPE_INSUFFICIENT', 403, 'Create a new API key with the required scopes or use a full_access key', 'https://docs.northrelay.ca/docs/api-reference/authentication#key-scopes');
     this.name = 'ScopeError';
     this.requiredScopes = requiredScopes;
   }
@@ -85,7 +85,7 @@ export class NotFoundError extends NorthRelayError {
 
 export class ServerError extends NorthRelayError {
   constructor(message: string) {
-    super(message, 'INTERNAL_ERROR', 500, 'Please try again later. If the problem persists, contact support', 'https://docs.northrelay.ca/support');
+    super(message, 'INTERNAL_ERROR', 500, 'Please try again later. If the problem persists, contact support', 'https://docs.northrelay.ca/docs/getting-started/troubleshooting#getting-help');
     this.name = 'ServerError';
   }
 }
