@@ -1,3 +1,8 @@
+## [1.11.0] - 2026-10-08
+
+### Added
+- `designs.apply_manifest(manifest, publish=True)` publishes each entry whose live release differs from its draft after a real apply; `export_manifest` now returns a `version` and per-entry `digest` / `publishedVersion`.
+
 ## [1.10.0] - 2026-10-08
 
 NorthRelay Studio: templates are designs, and dashboard templates live in the reserved `account` application (`ACCOUNT_APPLICATION`).

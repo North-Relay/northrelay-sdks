@@ -96,7 +96,7 @@ from northrelay.types import (
 
 from northrelay.resources.designs import ACCOUNT_APPLICATION
 
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 __all__ = [
     "ACCOUNT_APPLICATION",
     "NorthRelay",

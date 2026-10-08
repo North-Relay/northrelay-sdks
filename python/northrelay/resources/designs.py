@@ -89,8 +89,12 @@ class DesignsResource:
     async def export_manifest(self, application_key: str) -> dict[str, Any]:
         return await self._http.get("/api/v1/designs/manifest", params={"applicationKey": application_key})
 
-    async def apply_manifest(self, manifest: dict[str, Any]) -> dict[str, Any]:
-        return await self._http.post("/api/v1/designs/manifest", json=manifest)
+    async def apply_manifest(self, manifest: dict[str, Any], *, publish: bool | None = None) -> dict[str, Any]:
+        """Plan (``dryRun``, the default) or apply drafts atomically. ``publish=True`` then publishes each entry unless its live release is already current."""
+        body = dict(manifest)
+        if publish is not None:
+            body["publish"] = publish
+        return await self._http.post("/api/v1/designs/manifest", json=body)
 
     async def upload_logo(self, application_key: str, png_base64: str) -> dict[str, Any]:
         """Deprecated: use :meth:`upload_asset`, which also accepts JPEG and WebP."""
