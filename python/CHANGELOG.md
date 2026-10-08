@@ -1,3 +1,17 @@
+## [1.10.0] - 2026-10-08
+
+NorthRelay Studio: templates are designs, and dashboard templates live in the reserved `account` application (`ACCOUNT_APPLICATION`).
+
+### Added
+- `designs.usage(id)`: campaigns using a template and its send counts; `deliveries(id)` now includes API sends by template id.
+- Brands: `brand_usage`, `delete_brand`, `set_default_brand`, and `tracking_domain`, `set_tracking_domain`, `verify_tracking_domain`, `remove_tracking_domain`.
+- Assets: `assets()`, `upload_asset(image_base64)` (PNG, JPEG or WebP up to 700 KiB, resized for email) and `delete_asset(id)`.
+- `preview(..., brand_id=)`, `adopt_template(..., as_blocks=True)` and `send(..., from_=)`.
+
+### Deprecated
+- `client.templates` and `client.brand_theme` (legacy APIs, sunset 30 April 2027). Template ids keep working: each legacy template is a design with the same id.
+- `designs.upload_logo`: use `upload_asset`.
+
 ## [1.9.0] - 2026-10-06
 
 ### Added

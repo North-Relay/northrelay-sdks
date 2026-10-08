@@ -1,4 +1,9 @@
-"""Resource module"""
+"""Legacy template API (deprecated, sunset 30 April 2027).
+
+Templates are now Studio designs: use ``client.designs`` (dashboard templates use the
+application key ``"account"``). Every legacy template is a design with the same id, and
+``emails.send(template_id=...)`` is unchanged.
+"""
 from __future__ import annotations
 
 """Templates resource - Template management"""

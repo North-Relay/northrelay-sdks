@@ -1,7 +1,11 @@
 """Resource module"""
 from __future__ import annotations
 
-"""Brand Theme resource - UI customization"""
+"""Legacy brand API (deprecated, sunset 30 April 2027).
+
+Use the brand methods on ``client.designs``: ``brands``, ``create_brand``, ``update_brand``,
+``delete_brand``, ``set_default_brand`` and the tracking-domain methods.
+"""
 
 from typing import Any, Optional
 from northrelay.utils.http import HttpClient

@@ -94,8 +94,11 @@ from northrelay.types import (
     RateLimitInfo,
 )
 
-__version__ = "1.9.0"
+from northrelay.resources.designs import ACCOUNT_APPLICATION
+
+__version__ = "1.10.0"
 __all__ = [
+    "ACCOUNT_APPLICATION",
     "NorthRelay",
     # Exceptions
     "NorthRelayError",

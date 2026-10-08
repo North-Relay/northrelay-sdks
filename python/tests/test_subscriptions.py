@@ -172,7 +172,7 @@ async def test_subscribe_conflict_exposes_code_and_is_not_retried(make_client):
             "code": "RECIPIENT_UNSUBSCRIBED",
             "message": "ada@example.com has unsubscribed.",
             "fix_action": 'Pass "resubscribe": true only when they have given fresh consent',
-            "docs_url": "https://docs.northrelay.ca/api-reference/subscriptions",
+            "docs_url": "https://docs.northrelay.ca/docs/api-reference/subscriptions",
         },
     }
     client, rec = await make_client({("POST", "/api/v1/subscriptions"): (409, error)})

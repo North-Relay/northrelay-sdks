@@ -89,3 +89,56 @@ async def test_pagination_lifecycle_and_no_rotation_retry():
     assert json.loads(requests[1].content)["expectedRevision"] == 4
     assert requests[2].url.params["id"] == "key&id"
     assert json.loads(requests[3].content) == {"id": "key", "type": "APPLICATION", "action": "rotate"}
+
+
+@pytest.mark.asyncio
+async def test_studio_usage_brand_tracking_and_asset_endpoints():
+    requests = []
+
+    def respond(request):
+        requests.append((request, json.loads(request.content) if request.content else None))
+        return httpx.Response(200, json={"success": True, "data": {}})
+
+    client = NorthRelay(api_key="nr_live_fixture", base_url="https://example.test")
+    headers = client._http.client.headers
+    await client._http.client.aclose()
+    async with httpx.AsyncClient(base_url="https://example.test", headers=headers,
+                                 transport=httpx.MockTransport(respond)) as transport:
+        client._http.client = transport
+        d = client.designs
+        await d.usage("d/1")
+        await d.brand_usage("b/1")
+        await d.delete_brand("b/1")
+        await d.set_default_brand("b/1")
+        await d.set_tracking_domain("b/1", "track.example.com")
+        await d.verify_tracking_domain("b/1")
+        await d.remove_tracking_domain("b/1")
+        await d.assets()
+        await d.upload_asset("aGVsbG8=")
+        await d.delete_asset("a&1")
+        await d.preview("d/1", sample=True, brand_id="b/1")
+        await d.adopt_template(kind="gallery", id="welcome", digest="a" * 64, as_blocks=True)
+        await d.send("d/1", to=[{"email": "a@example.com"}], idempotency_key="idem-12345",
+                     from_={"email": "team@example.com"})
+    seen = [(r.method, r.url.raw_path.decode()) for r, _ in requests]
+    assert seen == [
+        ("GET", "/api/v1/designs/d%2F1/usage"),
+        ("GET", "/api/v1/designs/brands/b%2F1/usage"),
+        ("DELETE", "/api/v1/designs/brands/b%2F1"),
+        ("POST", "/api/v1/designs/brands/b%2F1/default"),
+        ("PUT", "/api/v1/designs/brands/b%2F1/tracking-domain"),
+        ("POST", "/api/v1/designs/brands/b%2F1/tracking-domain/verify"),
+        ("DELETE", "/api/v1/designs/brands/b%2F1/tracking-domain"),
+        ("GET", "/api/v1/designs/assets"),
+        ("POST", "/api/v1/designs/assets"),
+        ("DELETE", "/api/v1/designs/assets?id=a%261"),
+        ("POST", "/api/v1/designs/d%2F1/preview"),
+        ("POST", "/api/v1/designs/catalog/adopt"),
+        ("POST", "/api/v1/designs/d%2F1/send"),
+    ]
+    assert requests[4][1] == {"domain": "track.example.com"}
+    assert requests[8][1] == {"imageBase64": "aGVsbG8="}
+    assert requests[10][1]["brandId"] == "b/1"
+    assert requests[11][1]["asBlocks"] is True
+    assert requests[12][0].headers["Idempotency-Key"] == "idem-12345"
+    assert requests[12][1]["from"] == {"email": "team@example.com"}
