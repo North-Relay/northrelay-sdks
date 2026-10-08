@@ -77,3 +77,50 @@ it('preserves catalog digests, application derivation and revision conflicts ove
     expect(requests[3].body).toEqual({ id: 'key', type: 'APPLICATION', action: 'rotate' });
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
+
+it('calls the Studio usage, brand, tracking-domain and asset endpoints', async () => {
+  const requests: any[] = [];
+  const server = createServer(async (req, res) => {
+    let raw = ''; for await (const chunk of req) raw += chunk;
+    requests.push({ method: req.method, url: req.url, body: raw ? JSON.parse(raw) : null, key: req.headers['idempotency-key'] });
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ success: true, data: {} }));
+  });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  try {
+    const client = new NorthRelayClient({ apiKey: 'nr_live_fixture', baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}` });
+    await client.designs.usage('d/1');
+    await client.designs.brandUsage('b/1');
+    await client.designs.deleteBrand('b/1');
+    await client.designs.setDefaultBrand('b/1');
+    await client.designs.setTrackingDomain('b/1', 'track.example.com');
+    await client.designs.verifyTrackingDomain('b/1');
+    await client.designs.removeTrackingDomain('b/1');
+    await client.designs.assets();
+    await client.designs.uploadAsset({ imageBase64: 'aGVsbG8=' });
+    await client.designs.deleteAsset('a&1');
+    await client.designs.preview('d/1', { sample: true, brandId: 'b/1' });
+    await client.designs.adoptTemplate({ kind: 'gallery', id: 'welcome', digest: 'a'.repeat(64), asBlocks: true });
+    await client.designs.send('d/1', { to: [{ email: 'a@example.com' }], from: { email: 'team@example.com' } }, 'idem-12345');
+    expect(requests.map(r => `${r.method} ${r.url}`)).toEqual([
+      'GET /api/v1/designs/d%2F1/usage',
+      'GET /api/v1/designs/brands/b%2F1/usage',
+      'DELETE /api/v1/designs/brands/b%2F1',
+      'POST /api/v1/designs/brands/b%2F1/default',
+      'PUT /api/v1/designs/brands/b%2F1/tracking-domain',
+      'POST /api/v1/designs/brands/b%2F1/tracking-domain/verify',
+      'DELETE /api/v1/designs/brands/b%2F1/tracking-domain',
+      'GET /api/v1/designs/assets',
+      'POST /api/v1/designs/assets',
+      'DELETE /api/v1/designs/assets?id=a%261',
+      'POST /api/v1/designs/d%2F1/preview',
+      'POST /api/v1/designs/catalog/adopt',
+      'POST /api/v1/designs/d%2F1/send',
+    ]);
+    expect(requests[4].body).toEqual({ domain: 'track.example.com' });
+    expect(requests[8].body).toEqual({ imageBase64: 'aGVsbG8=' });
+    expect(requests[10].body).toEqual({ sample: true, brandId: 'b/1' });
+    expect(requests[11].body).toMatchObject({ asBlocks: true });
+    expect(requests[12]).toMatchObject({ key: 'idem-12345', body: { from: { email: 'team@example.com' } } });
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});

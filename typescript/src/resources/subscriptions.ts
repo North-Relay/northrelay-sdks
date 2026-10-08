@@ -6,7 +6,7 @@
  * suppression group (`client.suppressionGroups`): membership in a topic means
  * the address opted OUT of it, so subscribing to a topic removes the opt-out.
  *
- * API reference: https://docs.northrelay.ca/api-reference/subscriptions
+ * API reference: https://docs.northrelay.ca/docs/api-reference/subscriptions
  */
 
 import type { HttpClient } from '../utils/http';

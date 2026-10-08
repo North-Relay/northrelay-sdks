@@ -108,13 +108,13 @@ describe('subscriptions', () => {
           code: 'RECIPIENT_UNSUBSCRIBED',
           message: 'ada@example.com has unsubscribed.',
           fix_action: 'Pass "resubscribe": true only with fresh consent.',
-          docs_url: 'https://docs.northrelay.ca/api-reference/subscriptions',
+          docs_url: 'https://docs.northrelay.ca/docs/api-reference/subscriptions',
         },
       },
     });
     const error = await client.subscriptions.subscribe({ email: 'ada@example.com' }).catch((e) => e);
     expect(error).toBeInstanceOf(NorthRelayError);
-    expect(error).toMatchObject({ code: 'RECIPIENT_UNSUBSCRIBED', statusCode: 409, docsUrl: 'https://docs.northrelay.ca/api-reference/subscriptions' });
+    expect(error).toMatchObject({ code: 'RECIPIENT_UNSUBSCRIBED', statusCode: 409, docsUrl: 'https://docs.northrelay.ca/docs/api-reference/subscriptions' });
     expect(error.fixAction).toContain('resubscribe');
     expect(isSubscriptionError(error)).toBe(true);
     expect(isSubscriptionError(error, 'RECIPIENT_UNSUBSCRIBED')).toBe(true);

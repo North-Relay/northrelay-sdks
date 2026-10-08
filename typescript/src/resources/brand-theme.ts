@@ -7,6 +7,10 @@ import type { BrandTheme, CreateBrandThemeRequest, UpdateBrandThemeRequest } fro
 import type { RetryConfig } from '../utils/retry';
 import { withRetry } from '../utils/retry';
 
+/**
+ * @deprecated Legacy brand API (sunset 30 April 2027). Use `client.designs.brands()`,
+ * `createBrand`, `updateBrand`, `deleteBrand`, `setDefaultBrand` and the tracking-domain methods.
+ */
 export class BrandThemeResource {
   constructor(
     private http: HttpClient,

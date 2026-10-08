@@ -12,6 +12,12 @@ import type {
 import type { RetryConfig } from '../utils/retry';
 import { withRetry } from '../utils/retry';
 
+/**
+ * @deprecated Legacy template API (sunset 30 April 2027). Templates are now Studio designs:
+ * use `client.designs` (the dashboard's own templates use application key `"account"`). Template
+ * ids keep working: every legacy template becomes a design with the same id, and
+ * `emails.send({ templateId })` is unchanged.
+ */
 export class TemplatesResource {
   constructor(
     private http: HttpClient,

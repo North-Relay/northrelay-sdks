@@ -38,6 +38,7 @@ export class NorthRelayClient {
   public readonly emails: EmailsResource;
   public readonly credentials: CredentialsResource;
   public readonly designs: DesignsResource;
+  /** @deprecated Use `designs` (sunset 30 April 2027). */
   public readonly templates: TemplatesResource;
   public readonly domains: DomainsResource;
   public readonly webhooks: WebhooksResource;
@@ -53,6 +54,7 @@ export class NorthRelayClient {
   public readonly forms: FormsResource;
   
   // Customization
+  /** @deprecated Use `designs` brand methods (sunset 30 April 2027). */
   public readonly brandTheme: BrandThemeResource;
   
   // Analytics & Metrics

@@ -8,10 +8,23 @@ export interface EmailDesignDraft {
   category?: 'TRANSACTIONAL' | 'AUTHENTICATION' | 'NOTIFICATION' | 'SECURITY' | 'MARKETING' | 'OTHER';
   brand: Partial<CreateBrandThemeRequest>;
   variables?: Record<string, DesignVariable>;
+  /** "blocks": the visual editor document in `blocks`; NorthRelay compiles it to `html` on every save. */
+  format?: 'html' | 'blocks';
+  blocks?: unknown;
 }
+/** Application key of the account's own templates (the NorthRelay dashboard). */
+export const ACCOUNT_APPLICATION = 'account';
 export type CatalogSource = { kind: "template" | "gallery"; id: string };
 export type CatalogItem = CatalogSource & { name: string; subject: string; category: string; shared: boolean; description?: string };
-export interface DesignBrand { id: string; updatedAt: string; applicationKey: string | null; editable: boolean; theme: Partial<CreateBrandThemeRequest>; }
+export interface DesignBrand { id: string; updatedAt: string; applicationKey: string | null; isDefault?: boolean; editable: boolean; theme: Partial<CreateBrandThemeRequest>; }
+export interface DesignUsage { designId: string; key: string; applicationKey: string; campaigns: Array<{ id: string; name: string; status: string; updatedAt: string }>; sends: { design: number; api: number }; }
+export interface BrandUsage {
+  brandId: string; campaigns: number;
+  templates: Array<{ id: string; key: string; name: string; applicationKey: string; publishedVersion: number | null; revision: number; retired: boolean; followsBrandLive: boolean; needsPublish: boolean }>;
+}
+export interface DesignAsset { id: string; applicationKey: string; digest: string; url: string; createdAt?: string; usedBy?: Array<{ id: string; name: string }>; width?: number; height?: number; bytes?: number; contentType?: string; }
+export interface TrackingDomainState { trackingDomain: string | null; verified: boolean; active: boolean; cname: { type: 'CNAME'; name: string; value: string; status: 'pending' | 'verified' } | null; }
+export interface DesignDelivery { id: string; releaseId: string | null; messageId: string | null; state: string; createdAt: string; source?: 'design' | 'api'; recipient?: string | null; events: Array<{ eventType: string; timestamp: string }>; }
 export interface EmailDesign { retiredAt?: string | null; replacementId?: string | null; replacementKind?: "DESIGN" | "TEMPLATE" | null; brandThemeId?: string | null; source?: (CatalogSource & { digest: string }) | null; id: string; applicationKey: string; key: string; locale: string; draft: EmailDesignDraft; revision: number; publishedVersion: number | null; }
 export interface EmailDesignRelease { id: string; designId: string; version: number; snapshot: EmailDesignDraft; renderer: string; digest: string; revision?: number; }
 export interface DesignManifest { schemaVersion: 1; applicationKey: string; dryRun?: boolean; entries: Array<{ key: string; locale?: string; draft: EmailDesignDraft; expectedRevision?: number }>; }
@@ -33,11 +46,23 @@ export class DesignsResource {
   constructor(private http: HttpClient) {}
   catalog(options?: string | CatalogOptions): Promise<Result<{ items: CatalogItem[]; gallery: CatalogItem[]; nextCursor: string | null }>> { const query = queryString(typeof options === 'string' ? { cursor: options } : options ?? {}); return this.http.get(`/api/v1/designs/catalog${query ? `?${query}` : ''}`); }
   inspectTemplate(source: CatalogSource & { brandId?: string }): Promise<Result<{ source: CatalogSource & { digest: string }; draft: EmailDesignDraft; preview: { html: string; text: string; subject: string } }>> { return this.http.post('/api/v1/designs/catalog', source); }
-  adoptTemplate(input: CatalogSource & { digest: string; applicationKey?: string; brandId?: string }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs/catalog/adopt', input); }
+  /** asBlocks: adopt a gallery starter as a visual-editor (blocks) draft. */
+  adoptTemplate(input: CatalogSource & { digest: string; applicationKey?: string; brandId?: string; asBlocks?: boolean }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs/catalog/adopt', input); }
   syncSource(id: string, input: { expectedRevision: number; sourceDigest: string; apply?: boolean }): Promise<Result<unknown>> { return this.http.post(`${path(id)}/sync`, input); }
   brands(): Promise<Result<DesignBrand[]>> { return this.http.get('/api/v1/designs/brands'); }
   createBrand(input: { applicationKey?: string; theme: Omit<Partial<CreateBrandThemeRequest>, 'isDefault' | 'name'> & { name: string } }): Promise<Result<DesignBrand>> { return this.http.post('/api/v1/designs/brands', input); }
   updateBrand(id: string, input: { expectedUpdatedAt: string; theme: Omit<Partial<CreateBrandThemeRequest>, 'isDefault'> }): Promise<Result<DesignBrand>> { return this.http.patch(`/api/v1/designs/brands/${encodeURIComponent(id)}`, input); }
+  /** Templates and campaigns using a brand; `needsPublish` marks application templates still on an older brand version. */
+  brandUsage(id: string): Promise<Result<BrandUsage>> { return this.http.get(`/api/v1/designs/brands/${encodeURIComponent(id)}/usage`); }
+  /** Refused while templates use the brand, and for the only brand. */
+  deleteBrand(id: string): Promise<Result<{ deleted: string }>> { return this.http.delete(`/api/v1/designs/brands/${encodeURIComponent(id)}`); }
+  /** Make an account brand the default (account credentials only). */
+  setDefaultBrand(id: string): Promise<Result<DesignBrand>> { return this.http.post(`/api/v1/designs/brands/${encodeURIComponent(id)}/default`, {}); }
+  /** Custom tracking domain for a brand's open/click links (served once the platform enables per-domain TLS; see `active`). */
+  trackingDomain(brandId: string): Promise<Result<TrackingDomainState>> { return this.http.get(`/api/v1/designs/brands/${encodeURIComponent(brandId)}/tracking-domain`); }
+  setTrackingDomain(brandId: string, domain: string): Promise<Result<TrackingDomainState>> { return this.http.put(`/api/v1/designs/brands/${encodeURIComponent(brandId)}/tracking-domain`, { domain }); }
+  removeTrackingDomain(brandId: string): Promise<Result<TrackingDomainState>> { return this.http.delete(`/api/v1/designs/brands/${encodeURIComponent(brandId)}/tracking-domain`); }
+  verifyTrackingDomain(brandId: string): Promise<Result<TrackingDomainState>> { return this.http.post(`/api/v1/designs/brands/${encodeURIComponent(brandId)}/tracking-domain/verify`, {}); }
   bindBrand(id: string, brandId: string, expectedRevision: number): Promise<Result<EmailDesign>> { return this.http.post(`${path(id)}/brand`, { brandId, expectedRevision }); }
   capabilities(): Promise<Result<DesignCapabilities>> { return this.http.get('/api/v1/capabilities'); }
   list(applicationKey?: string): Promise<Result<EmailDesignSummary[]>> { return this.http.get(`/api/v1/designs${applicationKey ? `?applicationKey=${encodeURIComponent(applicationKey)}` : ''}`); }
@@ -46,16 +71,26 @@ export class DesignsResource {
   get(id: string): Promise<Result<EmailDesign>> { return this.http.get(path(id)); }
   create(input: { applicationKey: string; key: string; locale?: string; draft: EmailDesignDraft }): Promise<Result<EmailDesign>> { return this.http.post('/api/v1/designs', input); }
   update(id: string, draft: EmailDesignDraft, expectedRevision: number): Promise<Result<EmailDesign>> { return this.http.patch(path(id), { draft, expectedRevision }); }
-  preview(id: string, input: { variables?: Record<string, unknown>; sample?: boolean; published?: boolean; version?: number } = {}): Promise<Result<{ html: string; text: string; subject: string; renderer: string; releaseId: string | null; contentHash: string; sample: boolean }>> { return this.http.post(`${path(id)}/preview`, input); }
+  preview(id: string, input: { variables?: Record<string, unknown>; sample?: boolean; published?: boolean; version?: number; brandId?: string } = {}): Promise<Result<{ html: string; text: string; subject: string; renderer: string; releaseId: string | null; contentHash: string; sample: boolean }>> { return this.http.post(`${path(id)}/preview`, input); }
   publish(id: string, expectedRevision: number): Promise<Result<EmailDesignRelease>> { return this.http.post(`${path(id)}/publish`, { expectedRevision }); }
   rollback(id: string, rollbackVersion: number, expectedRevision: number): Promise<Result<EmailDesignRelease>> { return this.http.post(`${path(id)}/rollback`, { rollbackVersion, expectedRevision }); }
   release(id: string, version: number): Promise<Result<EmailDesignRelease>> { return this.http.get(`${path(id)}/releases?version=${version}`); }
   releases(id: string): Promise<Result<EmailDesignReleaseSummary[]>> { return this.http.get(`${path(id)}/releases`); }
-  send(id: string, input: { to: Array<{ email: string; name?: string }>; variables?: Record<string, unknown>; version?: number; metadata?: Record<string, string> }, idempotencyKey: string): Promise<Result<{ messageId: string; status: string }>> {
+  send(id: string, input: { to: Array<{ email: string; name?: string }>; from?: { email: string; name?: string }; variables?: Record<string, unknown>; version?: number; metadata?: Record<string, string> }, idempotencyKey: string): Promise<Result<{ messageId: string; status: string }>> {
     return this.http.post(`${path(id)}/send`, input, { headers: { 'Idempotency-Key': idempotencyKey } });
   }
-  deliveries(id: string): Promise<Result<Array<{ id: string; releaseId: string; messageId: string | null; state: string; createdAt: string; events: Array<{ eventType: string; timestamp: string }> }>>> { return this.http.get(`${path(id)}/deliveries`); }
+  /** Design sends and API sends by template id (`source`), newest first. */
+  deliveries(id: string): Promise<Result<DesignDelivery[]>> { return this.http.get(`${path(id)}/deliveries`); }
+  /** Campaigns using the template and send counts, before retiring or deleting it. */
+  usage(id: string): Promise<Result<DesignUsage>> { return this.http.get(`${path(id)}/usage`); }
   exportManifest(applicationKey: string): Promise<Result<DesignManifest>> { return this.http.get(`/api/v1/designs/manifest?applicationKey=${encodeURIComponent(applicationKey)}`); }
   applyManifest(manifest: DesignManifest): Promise<Result<{ dryRun: boolean; changes: Array<{ key: string; action: string }> }>> { return this.http.post('/api/v1/designs/manifest', manifest); }
+  /** @deprecated Use `uploadAsset({ imageBase64, applicationKey })`, which also accepts JPEG and WebP. */
   uploadLogo(applicationKey: string, pngBase64: string): Promise<Result<{ id: string; url: string; public: true; immutable: true }>> { return this.http.post('/api/v1/designs/assets', { applicationKey, pngBase64 }); }
+  /** Upload a logo or image (PNG, JPEG or WebP, up to 700 KiB). NorthRelay resizes it for email (max 1200x400) and serves it immutably. */
+  uploadAsset(input: { imageBase64: string; applicationKey?: string }): Promise<Result<DesignAsset>> { return this.http.post('/api/v1/designs/assets', input); }
+  /** Uploaded images, newest first, with the brands using each. */
+  assets(): Promise<Result<DesignAsset[]>> { return this.http.get('/api/v1/designs/assets'); }
+  /** Refused while a brand uses the image as its logo. */
+  deleteAsset(id: string): Promise<Result<{ deleted: string }>> { return this.http.delete(`/api/v1/designs/assets?id=${encodeURIComponent(id)}`); }
 }
