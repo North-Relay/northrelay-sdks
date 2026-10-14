@@ -1,0 +1,1165 @@
+{
+  "workspace_root": "",
+  "schema_version": 2,
+  "access": "workspace",
+  "entrypoint": "AGENTS.md",
+  "runtimes": [
+    "claude_code",
+    "codex_cli"
+  ],
+  "projects": [
+    "northrelay-sdks"
+  ],
+  "nodes": [
+    {
+      "id": "AGENTS.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L0",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "CLAUDE.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L0",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "CLAUDE.md"
+      ]
+    },
+    {
+      "id": "doc-CONTRIBUTING.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "CONTRIBUTING.md"
+      ]
+    },
+    {
+      "id": "doc-README.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "doc-SECURITY-DEPENDENCIES.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "SECURITY-DEPENDENCIES.md"
+      ]
+    },
+    {
+      "id": "doc-go-README.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "go/README.md"
+      ]
+    },
+    {
+      "id": "doc-python-CHANGELOG.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "python/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "doc-python-IMPLEMENTATION.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "python/IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "doc-python-README.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "python/README.md"
+      ]
+    },
+    {
+      "id": "doc-python-TEMPLATES.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "python/TEMPLATES.md"
+      ]
+    },
+    {
+      "id": "doc-typescript-CHANGELOG.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "typescript/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "doc-typescript-PUBLISHING.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "typescript/PUBLISHING.md"
+      ]
+    },
+    {
+      "id": "doc-typescript-README.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        "typescript/README.md"
+      ]
+    },
+    {
+      "id": "01-fix-CLAUDE.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/01-fix/CLAUDE.md"
+      ]
+    },
+    {
+      "id": "01-fix-CONTEXT.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/01-fix/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "01-fix-stages-01_reproduce-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/01-fix/stages/01_reproduce/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "01-fix-stages-02_fix-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/01-fix/stages/02_fix/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "01-fix-stages-03_verify-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/01-fix/stages/03_verify/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "02-feature-CLAUDE.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/02-feature/CLAUDE.md"
+      ]
+    },
+    {
+      "id": "02-feature-CONTEXT.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/02-feature/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "02-feature-stages-01_spec-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/02-feature/stages/01_spec/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "02-feature-stages-02_implement-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/02-feature/stages/02_implement/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "02-feature-stages-03_verify-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/02-feature/stages/03_verify/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "03-release-CLAUDE.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/03-release/CLAUDE.md"
+      ]
+    },
+    {
+      "id": "03-release-CONTEXT.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/03-release/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "03-release-stages-01_trace-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/03-release/stages/01_trace/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "03-release-stages-02_recover-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/03-release/stages/02_recover/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "04-deps-CLAUDE.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/04-deps/CLAUDE.md"
+      ]
+    },
+    {
+      "id": "04-deps-CONTEXT.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/04-deps/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "04-deps-stages-01_review-CONTEXT.md",
+      "revision": 1,
+      "kind": "stage",
+      "layer": "L2",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/04-deps/stages/01_review/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "shared-CONTEXT.md",
+      "revision": 1,
+      "kind": "route",
+      "layer": "L1",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "shared-architecture.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/architecture.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/__init__.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/client.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/exceptions.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/types.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/utils/http.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/utils/retry.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/client.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/errors.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/index.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/types.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/utils/http.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/utils/retry.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/webhooks.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/tsup.config.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    },
+    {
+      "id": "shared-build-and-test.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/build-and-test.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/icm-check.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/npm-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/python-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/sdk-contracts.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/security.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/pyproject.toml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/tests/test_designs.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/__tests__/designs.test.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    },
+    {
+      "id": "shared-conventions.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/conventions.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/npm-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "CONTRIBUTING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/pyproject.toml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/eslint.config.mjs",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/tsconfig.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    },
+    {
+      "id": "shared-documents.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/documents.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/npm-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/security.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "CONTRIBUTING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "SECURITY-DEPENDENCIES.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "go/README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/IMPLEMENTATION.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/TEMPLATES.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/examples/send_email.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/client.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/resources/emails.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/pyproject.toml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/PUBLISHING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/eslint.config.mjs",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/src/index.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    },
+    {
+      "id": "shared-mirror.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/mirror.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".gitignore",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "CONTRIBUTING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "SECURITY-DEPENDENCIES.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "go/README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/IMPLEMENTATION.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/TEMPLATES.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/types.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/PUBLISHING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package-lock.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/vitest.config.ts",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    },
+    {
+      "id": "shared-release.md",
+      "revision": 1,
+      "kind": "fact",
+      "layer": "L3",
+      "state": "accepted",
+      "project_id": "northrelay-sdks",
+      "verified_at": "2026-10-14",
+      "review_after": "2027-01-12",
+      "files": [
+        ".github/icm/_shared/release.md"
+      ],
+      "evidence": [
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/npm-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": ".github/workflows/python-publish.yml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "CONTRIBUTING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "go/README.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/northrelay/__init__.py",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "python/pyproject.toml",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/CHANGELOG.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/PUBLISHING.md",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        },
+        {
+          "repo": "North-Relay/northrelay-sdks",
+          "path": "typescript/package.json",
+          "commit": "b5f45e47402a9d9700f34c879ef33f18842f9f85"
+        }
+      ]
+    }
+  ],
+  "forms": [
+    {
+      "form": "umbrella",
+      "root": "",
+      "pipelines": [
+        ".github/icm/01-fix",
+        ".github/icm/02-feature",
+        ".github/icm/03-release",
+        ".github/icm/04-deps"
+      ],
+      "unit": "run"
+    },
+    {
+      "form": "pipeline",
+      "root": ".github/icm/01-fix",
+      "unit": "run"
+    },
+    {
+      "form": "pipeline",
+      "root": ".github/icm/02-feature",
+      "unit": "run"
+    },
+    {
+      "form": "pipeline",
+      "root": ".github/icm/03-release",
+      "unit": "run"
+    },
+    {
+      "form": "pipeline",
+      "root": ".github/icm/04-deps",
+      "unit": "run"
+    }
+  ],
+  "stages": {
+    "fix-reproduce": {
+      "order": 1,
+      "contract": ".github/icm/01-fix/stages/01_reproduce/CONTEXT.md",
+      "inputs": {
+        "working": [],
+        "reference": [
+          ".github/icm/_shared/mirror.md",
+          ".github/icm/_shared/architecture.md",
+          ".github/icm/_shared/build-and-test.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/02-feature/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/",
+        ".github/icm/_shared/documents.md"
+      ],
+      "outputs": [
+        ".github/icm/01-fix/stages/01_reproduce/output/reproduction.md"
+      ],
+      "human_check": "A person runs the command or reads the log, confirms it fails for the reported reason and not a neighbouring one, and agrees where the fix is made: the platform or this repository.",
+      "required": [
+        "01-fix-stages-01_reproduce-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-conventions.md",
+        "shared-release.md"
+      ]
+    },
+    "fix-fix": {
+      "order": 2,
+      "contract": ".github/icm/01-fix/stages/02_fix/CONTEXT.md",
+      "inputs": {
+        "working": [
+          ".github/icm/01-fix/stages/01_reproduce/output/reproduction.md"
+        ],
+        "reference": [
+          ".github/icm/_shared/mirror.md",
+          ".github/icm/_shared/build-and-test.md",
+          ".github/icm/_shared/conventions.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/02-feature/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/",
+        ".github/icm/_shared/documents.md"
+      ],
+      "outputs": [
+        ".github/icm/01-fix/stages/02_fix/output/fix-pr.md"
+      ],
+      "human_check": "A person reads the diff beside the reproduction: it removes the cause, it is in the repository that owns the file, and the version bump (or its absence) is what they want. The reviewer merges it there.",
+      "required": [
+        "01-fix-stages-02_fix-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-release.md"
+      ]
+    },
+    "fix-verify": {
+      "order": 3,
+      "contract": ".github/icm/01-fix/stages/03_verify/CONTEXT.md",
+      "inputs": {
+        "working": [
+          ".github/icm/01-fix/stages/02_fix/output/fix-pr.md"
+        ],
+        "reference": [
+          ".github/icm/_shared/release.md",
+          ".github/icm/_shared/build-and-test.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/02-feature/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/"
+      ],
+      "outputs": [
+        ".github/icm/01-fix/stages/03_verify/output/verification.md"
+      ],
+      "human_check": "A person sees the version in the registry and the reproduction passing against it, then closes the issue with the drafted comment.",
+      "required": [
+        "01-fix-stages-03_verify-CONTEXT.md"
+      ]
+    },
+    "feature-spec": {
+      "order": 1,
+      "contract": ".github/icm/02-feature/stages/01_spec/CONTEXT.md",
+      "inputs": {
+        "working": [],
+        "reference": [
+          ".github/icm/_shared/architecture.md",
+          ".github/icm/_shared/mirror.md",
+          ".github/icm/_shared/conventions.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/",
+        ".github/icm/_shared/release.md"
+      ],
+      "outputs": [
+        ".github/icm/02-feature/stages/01_spec/output/spec.md"
+      ],
+      "human_check": "A maintainer approves the route it calls, the names in both languages, the version class and the documents, or sends the spec back. Nothing is implemented against an unapproved spec; edit `spec.md` in place.",
+      "required": [
+        "02-feature-stages-01_spec-CONTEXT.md"
+      ]
+    },
+    "feature-implement": {
+      "order": 2,
+      "contract": ".github/icm/02-feature/stages/02_implement/CONTEXT.md",
+      "inputs": {
+        "working": [
+          ".github/icm/02-feature/stages/01_spec/output/spec.md"
+        ],
+        "reference": [
+          ".github/icm/_shared/architecture.md",
+          ".github/icm/_shared/build-and-test.md",
+          ".github/icm/_shared/mirror.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/",
+        ".github/icm/_shared/documents.md"
+      ],
+      "outputs": [
+        ".github/icm/02-feature/stages/02_implement/output/implement-pr.md"
+      ],
+      "human_check": "A person reviews the pull request against `spec.md`: both SDKs, the same names as approved, tests and documents present. The reviewer merges it on the platform; its deploy is what publishes a bumped version.",
+      "required": [
+        "02-feature-stages-02_implement-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-release.md"
+      ]
+    },
+    "feature-verify": {
+      "order": 3,
+      "contract": ".github/icm/02-feature/stages/03_verify/CONTEXT.md",
+      "inputs": {
+        "working": [
+          ".github/icm/02-feature/stages/02_implement/output/implement-pr.md"
+        ],
+        "reference": [
+          ".github/icm/_shared/release.md",
+          ".github/icm/_shared/build-and-test.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/03-release/",
+        ".github/icm/04-deps/"
+      ],
+      "outputs": [
+        ".github/icm/02-feature/stages/03_verify/output/verification.md"
+      ],
+      "human_check": "A person sees the version in both registries and the new names importable from each, then closes the request.",
+      "required": [
+        "02-feature-stages-03_verify-CONTEXT.md"
+      ]
+    },
+    "release-trace": {
+      "order": 1,
+      "contract": ".github/icm/03-release/stages/01_trace/CONTEXT.md",
+      "inputs": {
+        "working": [],
+        "reference": [
+          ".github/icm/_shared/release.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/02-feature/",
+        ".github/icm/04-deps/"
+      ],
+      "outputs": [
+        ".github/icm/03-release/stages/01_trace/output/trace.md"
+      ],
+      "human_check": "A person reads the state of each SDK and approves the proposed repair, or decides on none. A repair that publishes is never started without that approval.",
+      "required": [
+        "03-release-stages-01_trace-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-build-and-test.md"
+      ]
+    },
+    "release-recover": {
+      "order": 2,
+      "contract": ".github/icm/03-release/stages/02_recover/CONTEXT.md",
+      "inputs": {
+        "working": [
+          ".github/icm/03-release/stages/01_trace/output/trace.md"
+        ],
+        "reference": [
+          ".github/icm/_shared/release.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/02-feature/",
+        ".github/icm/04-deps/"
+      ],
+      "outputs": [
+        ".github/icm/03-release/stages/02_recover/output/publication.md"
+      ],
+      "human_check": "A person sees `X.Y.Z` on npm and PyPI (or reads why one is left unpublished) and reads any workflow change made on the way.",
+      "required": [
+        "03-release-stages-02_recover-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-conventions.md"
+      ]
+    },
+    "deps-review": {
+      "order": 1,
+      "contract": ".github/icm/04-deps/stages/01_review/CONTEXT.md",
+      "inputs": {
+        "working": [],
+        "reference": [
+          ".github/icm/_shared/mirror.md",
+          ".github/icm/_shared/build-and-test.md"
+        ]
+      },
+      "do_not_load": [
+        ".github/icm/01-fix/",
+        ".github/icm/02-feature/",
+        ".github/icm/03-release/"
+      ],
+      "outputs": [
+        ".github/icm/04-deps/stages/01_review/output/review.md"
+      ],
+      "human_check": "A person reads `review.md` and decides: port the bump to the platform, wait for the next version, merge a workflow bump here, or dismiss the alert. A manifest change is never merged here alone.",
+      "required": [
+        "04-deps-stages-01_review-CONTEXT.md"
+      ],
+      "optional": [
+        "shared-release.md"
+      ]
+    }
+  }
+}
